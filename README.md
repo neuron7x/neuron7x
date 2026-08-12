@@ -1,6 +1,10 @@
-# Yaroslav Vasylenko
+<p align="center">
+  <img src="./assets/neuro-code.webp" width="100%" alt="Neural code animation" />
+</p>
 
-### AI Systems & Verification Engineer
+<h1 align="center">Yaroslav Vasylenko</h1>
+
+<p align="center"><strong>AI Systems &amp; Verification Engineer</strong></p>
 
 I build agentic workflows, research software, and data-intensive Python systems
 that are designed to be inspected—not merely demonstrated.
