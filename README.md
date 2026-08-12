@@ -6,6 +6,14 @@
 
 <p align="center"><strong>AI Systems &amp; Verification Engineer</strong></p>
 
+<p align="center">
+  <a href="https://neuron7x-site-140887.gitlab.io/"><strong>Explore NEURON7X services →</strong></a>
+  ·
+  <a href="#selected-work">Selected work</a>
+  ·
+  <a href="mailto:neuron7x@gmail.com">Start a conversation</a>
+</p>
+
 I build agentic workflows, research software, and data-intensive Python systems
 that are designed to be inspected—not merely demonstrated.
 
@@ -104,6 +112,9 @@ Public credential verification links are available in my project materials or
 on request.
 
 ## Work with me
+
+**Services and engagement options:**
+[NEURON7X storefront](https://neuron7x-site-140887.gitlab.io/)
 
 I am a strong fit when a project needs more than a prototype—especially when
 the output must be testable, maintainable, reproducible, and safe to hand to
