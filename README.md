@@ -4,7 +4,7 @@
 
 <h1 align="center">Yaroslav Vasylenko</h1>
 
-<p align="center"><strong>AI Systems &amp; Verification Engineer</strong></p>
+<p align="center"><strong>AI Systems Architect · Controlled Inference · Agent Verification</strong></p>
 
 <p align="center">
   <a href="https://neuron7x-site-140887.gitlab.io/"><strong>Explore NEURON7X services →</strong></a>
@@ -14,8 +14,9 @@
   <a href="mailto:neuron7x@gmail.com">Start a conversation</a>
 </p>
 
-I build agentic workflows, research software, and data-intensive Python systems
-that are designed to be inspected—not merely demonstrated.
+I turn ambiguous AI and research requirements into bounded, testable systems.
+My work is designed to be inspected, reproduced, and challenged—not merely
+demonstrated.
 
 My work focuses on the difficult layer between an AI-generated result and a
 result that can be trusted: typed contracts, deterministic execution,
@@ -75,18 +76,33 @@ transitions and SHA-256 evidence records.
 
 `Python` · `cognitive architectures` · `control systems` · `auditability`
 
-## Engineering principles
+## How I reason about systems
+
+```text
+Frame → Bound → Formalize → Falsify → Build → Attack → Reproduce → Decide
+```
+
+I decompose systems from purpose to mechanism, invariant, test, and evidence.
+I separate analogy from mechanism, implementation from validation, and local
+results from independent proof. Negative results remain part of the record.
 
 ```text
 No claim without a boundary.
-No boundary without a test.
-No test result without provenance.
-No release without a replay path.
+No boundary without a falsifier.
+No verdict without provenance.
+No release without replay.
 ```
 
-I use AI coding agents extensively, but I do not treat model output as
-authority. Agents propose and implement; contracts, tests, audits, and human
-decisions determine what is accepted.
+AI agents generate, implement, and critique. They do not approve their own
+work. Acceptance is determined by explicit contracts, adversarial tests,
+reproducible evidence, and human judgment.
+
+### Evidence boundaries
+
+- Repository-tested does not mean independently certified.
+- A synthetic benchmark does not imply a production outcome.
+- A brain-inspired mechanism remains an engineering hypothesis until validated.
+- Coverage supports assurance; it does not prove correctness.
 
 ## Core stack
 
