@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="552" viewBox="0 0 480 552" role="img" aria-labelledby="title desc">
+<title id="title">NEURON7X Research Evidence Atlas</title>
+<desc id="desc">Five public research projects and a common inspection method. The cards are a portfolio index, not an integrated system architecture. REF identifies a source commit, not a performance score. Open the linked atlas for mechanisms, reproduction guides, probes, and claim boundaries.</desc>
+<rect width="480" height="552" fill="#ffffff"/>
+<g font-family="DejaVu Sans,Arial,sans-serif" text-anchor="middle" fill="#1f2328">
+<text x="240" y="32" font-size="22" font-weight="600" letter-spacing="1">RESEARCH EVIDENCE ATLAS</text>
+<text x="240" y="59" font-size="16" fill="#59636e">Mechanism · Probe · Claim boundary</text>
+<path d="M208 73H272" stroke="#c63244" stroke-width="2"/>
+<g data-card="0">
+<rect x="12" y="88" width="222" height="130" rx="10" fill="#fcfcfd" stroke="#d1d9e0"/>
+<text x="123" y="119" font-size="24" font-weight="600">CWC</text>
+<text x="123" y="145" font-size="17" fill="#59636e">Causal compute</text>
+<text x="123" y="167" font-size="17" fill="#59636e">allocation</text>
+<path d="M100 182H146" stroke="#c63244" stroke-width="1.2" opacity=".75"/>
+<text x="123" y="204" font-family="DejaVu Sans Mono,monospace" font-size="15" fill="#59636e">REF f2396198749e</text>
+</g>
+<g data-card="1">
+<rect x="246" y="88" width="222" height="130" rx="10" fill="#fcfcfd" stroke="#d1d9e0"/>
+<text x="357" y="119" font-size="24" font-weight="600">BN-Syn</text>
+<text x="357" y="145" font-size="17" fill="#59636e">Neural dynamics</text>
+<text x="357" y="167" font-size="17" fill="#59636e">AdEx · STDP</text>
+<path d="M334 182H380" stroke="#c63244" stroke-width="1.2" opacity=".75"/>
+<text x="357" y="204" font-family="DejaVu Sans Mono,monospace" font-size="15" fill="#59636e">REF c1de425ce4ec</text>
+</g>
+<g data-card="2">
+<rect x="12" y="234" width="222" height="130" rx="10" fill="#fcfcfd" stroke="#d1d9e0"/>
+<text x="123" y="265" font-size="24" font-weight="600">GeoSync</text>
+<text x="123" y="291" font-size="17" fill="#59636e">Quantitative research</text>
+<text x="123" y="313" font-size="17" fill="#59636e">Data contracts</text>
+<path d="M100 328H146" stroke="#c63244" stroke-width="1.2" opacity=".75"/>
+<text x="123" y="350" font-family="DejaVu Sans Mono,monospace" font-size="15" fill="#59636e">REF 2d96756164e1</text>
+</g>
+<g data-card="3">
+<rect x="246" y="234" width="222" height="130" rx="10" fill="#fcfcfd" stroke="#d1d9e0"/>
+<text x="357" y="265" font-size="24" font-weight="600">neosynaptex</text>
+<text x="357" y="291" font-size="17" fill="#59636e">Scaling diagnostics</text>
+<text x="357" y="313" font-size="17" fill="#59636e">Null models</text>
+<path d="M334 328H380" stroke="#c63244" stroke-width="1.2" opacity=".75"/>
+<text x="357" y="350" font-family="DejaVu Sans Mono,monospace" font-size="15" fill="#59636e">REF f70e16a97dcf</text>
+</g>
+<g data-card="4">
+<rect x="12" y="380" width="222" height="130" rx="10" fill="#fcfcfd" stroke="#d1d9e0"/>
+<text x="123" y="411" font-size="24" font-weight="600">KORPUS</text>
+<text x="123" y="437" font-size="17" fill="#59636e">Evidence-bound</text>
+<text x="123" y="459" font-size="17" fill="#59636e">inference</text>
+<path d="M100 474H146" stroke="#c63244" stroke-width="1.2" opacity=".75"/>
+<text x="123" y="496" font-family="DejaVu Sans Mono,monospace" font-size="15" fill="#59636e">REF cda9db4ae2e4</text>
+</g>
+<g data-card="5">
+<rect x="246" y="380" width="222" height="130" rx="10" fill="#fcfcfd" stroke="#d1d9e0"/>
+<text x="357" y="411" font-size="24" font-weight="600">METHOD</text>
+<text x="357" y="437" font-size="17" fill="#59636e">Inspect · Reproduce</text>
+<text x="357" y="459" font-size="17" fill="#59636e">Falsify · Challenge</text>
+<path d="M334 474H380" stroke="#c63244" stroke-width="1.2" opacity=".75"/>
+<text x="357" y="496" font-family="DejaVu Sans Mono,monospace" font-size="15" fill="#59636e">ATLAS 6fc046f254</text>
+</g>
+<text x="240" y="539" font-size="15" fill="#59636e">PINNED SOURCE REFERENCES · 2026-10-12</text>
+</g></svg>

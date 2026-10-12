@@ -17,13 +17,6 @@
   <a href="#collaborate">Collaborate</a>
 </p>
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/research-signature-dark.svg">
-    <img src="./assets/research-signature-light.svg" width="100%" alt="Decorative phase signature: dynamics, control, and evidence">
-  </picture>
-</p>
-
 I translate neural and cognitive mechanisms into computational models,
 constrained controllers, and reproducible evaluation systems. My research
 asks which adaptive mechanisms change behavior under controlled interventions
@@ -37,13 +30,33 @@ and replayable evidence.
 
 ## Selected research
 
-| Project | Research / engineering focus | Inspect |
-| :--- | :--- | :--- |
-| **[Cognitive Wiring Core](https://github.com/neuron7x/sapolsky-behave-layers)** | Causal evaluation of adaptive computation: budget-matched experiments, intervention controls, and falsification harnesses. | [System map](https://github.com/neuron7x/sapolsky-behave-layers/blob/main/SYSTEM.md) · [Interventions](https://github.com/neuron7x/sapolsky-behave-layers/blob/main/cwc/causal/interventions.py) |
-| **[BN-Syn](https://github.com/neuron7x/bnsyn-phase-controlled-emergent-dynamics)** | Neural-dynamics simulation with AdEx neurons, STDP plasticity, criticality control, and reproducibility checks. | [Neuron model](https://github.com/neuron7x/bnsyn-phase-controlled-emergent-dynamics/blob/main/src/bnsyn/neuron/adex.py) · [Status](https://github.com/neuron7x/bnsyn-phase-controlled-emergent-dynamics/blob/main/docs/STATUS.md) |
-| **[GeoSync](https://github.com/neuron7x/Kuramoto-synchronization-model)** | Quantitative research infrastructure for falsifiable market-structure hypotheses, with explicit data contracts and provenance. | [Dataset contracts](https://github.com/neuron7x/Kuramoto-synchronization-model/blob/main/core/data/dataset_contracts.py) |
-| **[neosynaptex](https://github.com/neuron7x/neosynaptex)** | Cross-substrate scaling diagnostics: null models, counterexample search, and explicit limits on what an estimator can establish. | [Canonical position](https://github.com/neuron7x/neosynaptex/blob/main/CANONICAL_POSITION.md) · [Research direction](https://github.com/neuron7x/neosynaptex/blob/main/docs/RESEARCH_DIRECTION.md) |
-| **[KORPUS](https://github.com/neuron7x/KORPUS)** | Evidence-bound knowledge and inference systems: authorization, abstention, auditability, and explicit release admission. | [Start here](https://github.com/neuron7x/KORPUS/blob/main/README_FIRST.md) · [Release authorization](https://github.com/neuron7x/KORPUS/blob/main/apps/api/src/korpus/application/final_release_authorization.py) |
+<p align="center">
+  <a href="./RESEARCH_ATLAS.md">
+    <picture>
+      <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="./assets/research-atlas-mobile-dark.svg">
+      <source media="(max-width: 600px)" srcset="./assets/research-atlas-mobile-light.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="./assets/research-atlas-dark.svg">
+      <img src="./assets/research-atlas-light.svg" width="100%" alt="Research Evidence Atlas: CWC, BN-Syn, GeoSync, neosynaptex, KORPUS, and the common inspection method">
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <a href="./RESEARCH_ATLAS.md#cwc">CWC</a> ·
+  <a href="./RESEARCH_ATLAS.md#bnsyn">BN-Syn</a> ·
+  <a href="./RESEARCH_ATLAS.md#geosync">GeoSync</a> ·
+  <a href="./RESEARCH_ATLAS.md#neosynaptex">neosynaptex</a> ·
+  <a href="./RESEARCH_ATLAS.md#korpus">KORPUS</a>
+</p>
+
+Each project has a commit-pinned route to its mechanism, reproduction guide,
+adversarial probe or counterexample, and claim boundary. The atlas makes
+the source revision explicit and keeps the limits of the evidence visible.
+
+<p align="center">
+  <a href="./RESEARCH_ATLAS.md"><strong>Explore the atlas →</strong></a> ·
+  <a href="https://github.com/neuron7x/neuron7x/issues/new?template=research-challenge.yml">Challenge a result</a>
+</p>
 
 CWC builds on [Andrej Karpathy's nanochat](https://github.com/karpathy/nanochat).
 The original contribution is the CWC research, instrumentation, and evaluation
@@ -91,5 +104,12 @@ agent reliability.
 [Email](mailto:neuron7x@gmail.com) ·
 [Telegram](https://t.me/neuron7x) ·
 [NEURON7X services](https://neuron7x-site-140887.gitlab.io/)
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/research-signature-dark.svg">
+    <img src="./assets/research-signature-light.svg" width="100%" alt="Decorative phase signature: dynamics, control, and evidence">
+  </picture>
+</p>
 
 <p align="center"><sub>⊛ Vita est certamine.</sub></p>

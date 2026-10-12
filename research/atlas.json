@@ -1,0 +1,162 @@
+{
+  "schema": "neuron7x.research-atlas.v1",
+  "verified_date": "2026-10-12",
+  "verification_scope": "Source references and blob identities verified. Project test suites and experiments were not executed for this profile update.",
+  "projects": [
+    {
+      "slug": "cwc",
+      "name": "CWC",
+      "subtitle": [
+        "Causal compute",
+        "allocation"
+      ],
+      "summary": "Adaptive-computation research with explicit identifying assumptions and adversarial causal controls.",
+      "scope": "The linked regime-identifiability tests distinguish a causal candidate from causal authority, expose assumption violations, and retain untestable exclusion debt.",
+      "files": {
+        "inspect": {
+          "path": "cwc/causal/regime_identifiability.py",
+          "blob": "2531573c80b550951df01a05a5c57ef9be97df1e"
+        },
+        "reproduce": {
+          "path": "docs/reproducibility/CLEAN_ROOM_REPRODUCTION_PROTOCOL.md",
+          "blob": "eb4bad2af9012e93e5838c15055bf568f2d1ae3b"
+        },
+        "falsify": {
+          "path": "tests/test_csca08_regime_identifiability.py",
+          "blob": "8bc04cf54af576acad71a491050ce781c3c66a0d"
+        },
+        "boundary": {
+          "path": "README.md",
+          "blob": "746098c702bb280fcc2fae2512c73e0e40efeed2"
+        }
+      },
+      "probe_kind": "Adversarial test",
+      "repository": "neuron7x/sapolsky-behave-layers",
+      "commit": "f2396198749ee9cf2d51078cc890e299f51d4bd9"
+    },
+    {
+      "slug": "bnsyn",
+      "name": "BN-Syn",
+      "subtitle": [
+        "Neural dynamics",
+        "AdEx · STDP"
+      ],
+      "summary": "Neural-dynamics simulation with explicit numerical models and property-based probes.",
+      "scope": "Research / pre-production. Properties of a numerical neuron model do not establish biological fidelity or deployment readiness.",
+      "files": {
+        "inspect": {
+          "path": "src/bnsyn/neuron/adex.py",
+          "blob": "a0467c152d985700e92f7677aff178c2bf3d3fc6"
+        },
+        "reproduce": {
+          "path": "README.md",
+          "blob": "b4ced723344b0e8e84958f84727c01d81db3d1bd"
+        },
+        "falsify": {
+          "path": "tests/properties/test_adex_properties.py",
+          "blob": "4f5f6e672fe51b898a45f6f5d64fd847a55f0aab"
+        },
+        "boundary": {
+          "path": "docs/STATUS.md",
+          "blob": "f32cc90a61f198f32f809f040f39f1bd1a86a9ed"
+        }
+      },
+      "probe_kind": "Property-based test",
+      "repository": "neuron7x/bnsyn-phase-controlled-emergent-dynamics",
+      "commit": "c1de425ce4ece362e7f2feb2d9f24da5d3231014"
+    },
+    {
+      "slug": "geosync",
+      "name": "GeoSync",
+      "subtitle": [
+        "Quantitative research",
+        "Data contracts"
+      ],
+      "summary": "Quantitative research infrastructure with governed datasets, semantic invariants, and provenance.",
+      "scope": "The linked probe rejects malformed OHLC data. Dataset validation does not establish market predictability or profitability.",
+      "files": {
+        "inspect": {
+          "path": "core/data/dataset_contracts.py",
+          "blob": "a5125dbc8a42731cee3780e4ecf912d2439407e5"
+        },
+        "reproduce": {
+          "path": "docs/REPRODUCIBILITY.md",
+          "blob": "41002eb8fd2ea7f8af72c699661ff5c0a5cc3b0e"
+        },
+        "falsify": {
+          "path": "tests/data/test_dataset_schema_validation.py",
+          "blob": "277c7dd3cb0d52cc67514e23b0b5be186b640ed2"
+        },
+        "boundary": {
+          "path": "README.md",
+          "blob": "f6f1ba2123cc652c659ed3da1bcddad2de1e752a"
+        }
+      },
+      "probe_kind": "Adversarial schema test",
+      "repository": "neuron7x/Kuramoto-synchronization-model",
+      "commit": "2d96756164e14f9ea24abe9c5ba3a3ff27cc1780"
+    },
+    {
+      "slug": "neosynaptex",
+      "name": "neosynaptex",
+      "subtitle": [
+        "Scaling diagnostics",
+        "Null models"
+      ],
+      "summary": "Cross-substrate scaling diagnostics with explicit estimator definitions and counterexample records.",
+      "scope": "An estimated γ ≈ 1 alone is not specific evidence for criticality or metastability. The linked synthetic counterexample record carries its own narrow scope.",
+      "files": {
+        "inspect": {
+          "path": "core/gamma.py",
+          "blob": "b1d9eea43237ce4caec19f6d8f2a8bb46eeb4c05"
+        },
+        "reproduce": {
+          "path": "README.md",
+          "blob": "f628d90824ff97d30aa8db50f67a228a6f96fdbd"
+        },
+        "falsify": {
+          "path": "results/gamma_specificity/run_v1.json",
+          "blob": "c053667e23eab320a8158c4ee4ea2bd0c5dbffec"
+        },
+        "boundary": {
+          "path": "CANONICAL_POSITION.md",
+          "blob": "bc8b58bef4da8d9b9e1e65fc6f06a639e4e6a57d"
+        }
+      },
+      "probe_kind": "Recorded counterexample",
+      "repository": "neuron7x/neosynaptex",
+      "commit": "f70e16a97dcfee332eed73ec09328329e7fd55a5"
+    },
+    {
+      "slug": "korpus",
+      "name": "KORPUS",
+      "subtitle": [
+        "Evidence-bound",
+        "inference"
+      ],
+      "summary": "Knowledge and inference systems with evidence-bound release admission and explicit authorization.",
+      "scope": "Engineering checks, signed artifacts, and production authorization are distinct. The linked canonical start page records the authorization boundary.",
+      "files": {
+        "inspect": {
+          "path": "apps/api/src/korpus/application/final_release_authorization.py",
+          "blob": "14c8bef91b766c1a8325e1a0a15db5b603390ab6"
+        },
+        "reproduce": {
+          "path": "README_FIRST.md",
+          "blob": "eb60946197f1ed009d26f90738931b4d17d8c2e3"
+        },
+        "falsify": {
+          "path": "apps/api/tests/test_final_release_authorization.py",
+          "blob": "988f7115774d6599be58059e2122f2e8daad4cec"
+        },
+        "boundary": {
+          "path": "README_FIRST.md",
+          "blob": "eb60946197f1ed009d26f90738931b4d17d8c2e3"
+        }
+      },
+      "probe_kind": "Release-authorization test",
+      "repository": "neuron7x/KORPUS",
+      "commit": "cda9db4ae2e44ab5c089fe28c06722e1ce49ac93"
+    }
+  ]
+}

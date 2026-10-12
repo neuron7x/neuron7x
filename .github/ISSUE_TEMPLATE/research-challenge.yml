@@ -1,0 +1,61 @@
+name: Research challenge
+description: Submit a source-pinned, reproducible counterexample or replication discrepancy.
+title: "[Research challenge]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Start from the [Research Evidence Atlas](https://github.com/neuron7x/neuron7x/blob/main/RESEARCH_ATLAS.md).
+        Identify the source revision, the prediction being challenged, and the observation that changes the verdict.
+  - type: dropdown
+    id: project
+    attributes:
+      label: Project
+      options:
+        - "CWC"
+        - "BN-Syn"
+        - "GeoSync"
+        - "neosynaptex"
+        - "KORPUS"
+        - "Profile atlas / method"
+    validations:
+      required: true
+  - type: input
+    id: source_ref
+    attributes:
+      label: Source commit and claim identifier
+      placeholder: Full commit SHA; claim ID or exact source location if available
+    validations:
+      required: true
+  - type: dropdown
+    id: evidence_type
+    attributes:
+      label: Evidence type
+      options:
+        - "Executable counterexample"
+        - "Replication discrepancy"
+        - "Claim or scope mismatch"
+        - "Documentation inconsistency"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Minimal commands or source comparison; include seed, data, and environment when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: prediction_observation
+    attributes:
+      label: Prediction, observation, and rejection criterion
+      description: State what was expected, what you observed, and which criterion would reject or narrow the claim.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and artifacts
+      description: Attach or link logs, a minimal case, a result file, or the exact contradictory source passage.
+    validations:
+      required: false
