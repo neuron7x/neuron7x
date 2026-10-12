@@ -2,148 +2,94 @@
   <img src="./assets/neuro-code.webp" width="100%" alt="Neural code animation" />
 </p>
 
+<!-- The original brain animation is intentional. Preserve its file and reference. -->
+
 <h1 align="center">Yaroslav Vasylenko</h1>
 
-<p align="center"><strong>AI Systems Architect · Controlled Inference · Agent Verification</strong></p>
-
 <p align="center">
-  <a href="https://neuron7x-site-140887.gitlab.io/"><strong>Explore NEURON7X services →</strong></a>
-  ·
-  <a href="#selected-work">Selected work</a>
-  ·
-  <a href="mailto:neuron7x@gmail.com">Start a conversation</a>
+  <strong>Independent NeuroAI Researcher · AI Systems Architect</strong><br>
+  Computational neuroscience · Cognitive architectures · Technical AI safety
 </p>
 
-I turn ambiguous AI and research requirements into bounded, testable systems.
-My work is designed to be inspected, reproduced, and challenged—not merely
-demonstrated.
+<p align="center">
+  <a href="#selected-research">Research</a> ·
+  <a href="#engineering-practice">Engineering</a> ·
+  <a href="#collaborate">Collaborate</a>
+</p>
 
-My work focuses on the difficult layer between an AI-generated result and a
-result that can be trusted: typed contracts, deterministic execution,
-fail-closed validation, adversarial tests, provenance, CI gates, and replayable
-evidence.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/research-signature-dark.svg">
+    <img src="./assets/research-signature-light.svg" width="100%" alt="Decorative phase signature: dynamics, control, and evidence">
+  </picture>
+</p>
 
-Based in Ukraine · Available for remote contract work
+I translate neural and cognitive mechanisms into computational models,
+constrained controllers, and reproducible evaluation systems. My research
+asks which adaptive mechanisms change behavior under controlled interventions
+and explicit compute budgets—and where those mechanisms fail.
 
-## What I can deliver
+At the AI systems layer, I build explicit control around probabilistic
+generation: typed contracts, bounded authority, fail-closed decisions,
+and replayable evidence.
 
-- **AI agent systems:** tool-using agents, structured outputs, MCP integrations,
-  multi-agent workflows, evaluation harnesses, and human approval boundaries.
-- **Python engineering:** typed APIs, FastAPI and Pydantic services, scientific
-  pipelines, test architecture, refactoring, packaging, and automation.
-- **Verification infrastructure:** property-based and mutation testing,
-  deterministic replay, schema validation, provenance ledgers, security gates,
-  and reproducible CI.
-- **Research-to-software translation:** turning mathematical or experimental
-  ideas into bounded implementations with explicit assumptions, baselines, and
-  falsifiers.
-- **Repository recovery and consolidation:** auditing divergent histories,
-  preserving provenance, migrating namespaces, and producing one documented,
-  testable source of truth.
+**Ukraine · Independent research · Remote collaboration**
 
-## Selected work
+## Selected research
 
-### [GeoSync / Kuramoto synchronization model](https://github.com/neuron7x/Kuramoto-synchronization-model)
+| Project | Research / engineering focus | Inspect |
+| :--- | :--- | :--- |
+| **[Cognitive Wiring Core](https://github.com/neuron7x/sapolsky-behave-layers)** | Causal evaluation of adaptive computation: budget-matched experiments, intervention controls, and falsification harnesses. | [System map](https://github.com/neuron7x/sapolsky-behave-layers/blob/main/SYSTEM.md) · [Interventions](https://github.com/neuron7x/sapolsky-behave-layers/blob/main/cwc/causal/interventions.py) |
+| **[BN-Syn](https://github.com/neuron7x/bnsyn-phase-controlled-emergent-dynamics)** | Neural-dynamics simulation with AdEx neurons, STDP plasticity, criticality control, and reproducibility checks. | [Neuron model](https://github.com/neuron7x/bnsyn-phase-controlled-emergent-dynamics/blob/main/src/bnsyn/neuron/adex.py) · [Status](https://github.com/neuron7x/bnsyn-phase-controlled-emergent-dynamics/blob/main/docs/STATUS.md) |
+| **[GeoSync](https://github.com/neuron7x/Kuramoto-synchronization-model)** | Quantitative research infrastructure for falsifiable market-structure hypotheses, with explicit data contracts and provenance. | [Dataset contracts](https://github.com/neuron7x/Kuramoto-synchronization-model/blob/main/core/data/dataset_contracts.py) |
+| **[neosynaptex](https://github.com/neuron7x/neosynaptex)** | Cross-substrate scaling diagnostics: null models, counterexample search, and explicit limits on what an estimator can establish. | [Canonical position](https://github.com/neuron7x/neosynaptex/blob/main/CANONICAL_POSITION.md) · [Research direction](https://github.com/neuron7x/neosynaptex/blob/main/docs/RESEARCH_DIRECTION.md) |
+| **[KORPUS](https://github.com/neuron7x/KORPUS)** | Evidence-bound knowledge and inference systems: authorization, abstention, auditability, and explicit release admission. | [Start here](https://github.com/neuron7x/KORPUS/blob/main/README_FIRST.md) · [Release authorization](https://github.com/neuron7x/KORPUS/blob/main/apps/api/src/korpus/application/final_release_authorization.py) |
 
-A verification-first quantitative research platform for falsifiable
-market-structure hypotheses. It combines dynamical-systems research with data
-contracts, machine-checkable invariants, null baselines, artifact schemas, and
-replayable evidence. The repository explicitly separates implemented
-mechanisms from claims supported by data.
+CWC builds on [Andrej Karpathy's nanochat](https://github.com/karpathy/nanochat).
+The original contribution is the CWC research, instrumentation, and evaluation
+layer; upstream attribution is preserved in the repository.
 
-`Python` · `pytest` · `Hypothesis` · `Pydantic` · `CI/CD` · `scientific computing`
+## Engineering practice
 
-### [neosynaptex](https://github.com/neuron7x/neosynaptex)
+I work from **mechanism → invariant → falsifier → evidence**.
 
-Cross-domain coherence diagnostics built around explicit measurement and claim
-boundaries. The project explores scaling and synchronization across physical,
-biological, and cognitive substrates without treating analogy as proof.
+- **Causal evaluation:** controlled interventions, ablations, matched baselines,
+  and explicit limits on inference.
+- **Neural and cognitive systems:** dynamical models, constrained autonomy,
+  and inspectable state transitions.
+- **Agent reliability:** tool boundaries, structured outputs, policy gates,
+  and separation of generation from acceptance.
+- **Software assurance:** property-based and mutation testing, deterministic
+  replay, schema validation, provenance, and CI gates.
 
-`Python` · `dynamical systems` · `verification` · `reproducible research`
+**Core tools:** Python · NumPy / SciPy · FastAPI / Pydantic ·
+pytest / Hypothesis · Docker · Linux · GitHub Actions / GitLab CI
 
-### [substrate-universe](https://github.com/neuron7x/substrate-universe)
+<details>
+<summary><strong>Evidence and scope</strong></summary>
 
-A pure-NumPy multi-physics orchestration experiment combining
-reaction–diffusion dynamics, Kuramoto/Ricci mechanisms, spiking dynamics, and a
-hash-bound evidence ledger.
+Experimental findings are conditional on their documented substrates,
+datasets, interventions, and compute budgets. Negative results remain part
+of the research record.
 
-`NumPy` · `simulation` · `determinism` · `evidence artifacts`
+CWC's budgeted-computation programme and BN-Syn's neural simulations remain
+research work. KORPUS distinguishes engineering checks from production
+authorization. The neosynaptex canon records why an estimated γ ≈ 1 alone
+cannot establish criticality or metastability.
 
-### [PFC Coherent Induction](https://github.com/neuron7x/pfc-coherent-induction)
+Current status and supporting evidence belong to the linked project sources.
+Independent replication and deployment require their own evidence.
 
-A brain-inspired, fail-closed cognitive-control experiment with explicit state
-transitions and SHA-256 evidence records.
+</details>
 
-`Python` · `cognitive architectures` · `control systems` · `auditability`
+## Collaborate
 
-## How I reason about systems
+Open to research collaboration and focused engineering engagements in
+NeuroAI, cognitive architectures, technical AI safety evaluation, and
+agent reliability.
 
-```text
-Frame → Bound → Formalize → Falsify → Build → Attack → Reproduce → Decide
-```
+[Email](mailto:neuron7x@gmail.com) ·
+[Telegram](https://t.me/neuron7x) ·
+[NEURON7X services](https://neuron7x-site-140887.gitlab.io/)
 
-I decompose systems from purpose to mechanism, invariant, test, and evidence.
-I separate analogy from mechanism, implementation from validation, and local
-results from independent proof. Negative results remain part of the record.
-
-```text
-No claim without a boundary.
-No boundary without a falsifier.
-No verdict without provenance.
-No release without replay.
-```
-
-AI agents generate, implement, and critique. They do not approve their own
-work. Acceptance is determined by explicit contracts, adversarial tests,
-reproducible evidence, and human judgment.
-
-### Evidence boundaries
-
-- Repository-tested does not mean independently certified.
-- A synthetic benchmark does not imply a production outcome.
-- A brain-inspired mechanism remains an engineering hypothesis until validated.
-- Coverage supports assurance; it does not prove correctness.
-
-## Core stack
-
-`Python` · `FastAPI` · `Pydantic` · `pytest` · `Hypothesis` · `mypy` · `ruff` ·
-`GitHub Actions` · `GitLab CI` · `Docker` · `Linux` · `Bash` · `TypeScript` ·
-`Rust` · `MCP` · `LLM APIs` · `agent evaluation` · `scientific Python`
-
-Applied methods include Kuramoto/Sakaguchi synchronization, Lyapunov analysis,
-Ollivier/Forman–Ricci curvature, persistent homology, reaction–diffusion, and
-time-series validation. These are implementation domains, not unsupported
-claims of scientific discovery.
-
-## Training
-
-- Anthropic Academy: Building with the Claude API
-- Anthropic Academy: Claude Code in Action
-- Anthropic Academy: Introduction to MCP
-- Anthropic Academy: MCP — Advanced Topics
-- Anthropic Academy: Introduction to Subagents
-- GoIT: Prompt Engineering & AI Agents — 77 hours, certificate ID 44505
-
-Public credential verification links are available in my project materials or
-on request.
-
-## Work with me
-
-**Services and engagement options:**
-[NEURON7X storefront](https://neuron7x-site-140887.gitlab.io/)
-
-I am a strong fit when a project needs more than a prototype—especially when
-the output must be testable, maintainable, reproducible, and safe to hand to
-another engineer.
-
-Typical engagements:
-
-- build or repair an AI-agent workflow;
-- turn a research prototype into a tested Python package;
-- design an evaluation or falsification harness;
-- audit and consolidate a complex repository;
-- add deterministic CI, provenance, and release evidence;
-- diagnose reliability, data-quality, or architecture failures.
-
-Email: [neuron7x@gmail.com](mailto:neuron7x@gmail.com)<br>
-Telegram: [@neuron7x](https://t.me/neuron7x)
+<p align="center"><sub>⊛ Vita est certamine.</sub></p>
