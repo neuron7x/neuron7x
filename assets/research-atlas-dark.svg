@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="552" viewBox="0 0 960 552" role="img" aria-labelledby="title desc">
 <title id="title">NEURON7X Research Evidence Atlas</title>
-<desc id="desc">Five public research projects and a common inspection method. The cards are a portfolio index, not an integrated system architecture. REF identifies a source commit, not a performance score. Open the linked atlas for mechanisms, reproduction guides, probes, and claim boundaries.</desc>
+<desc id="desc">Public research projects and a common inspection method. The cards are a portfolio index, not an integrated system architecture. REF identifies a source commit, not a performance score. Open the linked atlas for mechanisms, reproduction guides, probes, and claim boundaries.</desc>
 <rect width="960" height="552" fill="#0d1117"/>
 <g font-family="DejaVu Sans,Arial,sans-serif" text-anchor="middle" fill="#e6edf3">
 <text x="480" y="32" font-size="22" font-weight="600" letter-spacing="1">RESEARCH EVIDENCE ATLAS</text>
-<text x="480" y="59" font-size="15" fill="#a1aab5">Mechanism · Probe · Claim boundary</text>
+<text x="480" y="59" font-size="16" fill="#a1aab5">Mechanism · Probe · Claim boundary</text>
 <path d="M448 73H512" stroke="#f85149" stroke-width="2"/>
 <g data-card="0">
 <rect x="24" y="88" width="446" height="130" rx="10" fill="#10151c" stroke="#30363d"/>
@@ -12,7 +12,7 @@
 <text x="247" y="145" font-size="18" fill="#a1aab5">Causal compute</text>
 <text x="247" y="167" font-size="18" fill="#a1aab5">allocation</text>
 <path d="M224 182H270" stroke="#f85149" stroke-width="1.2" opacity=".75"/>
-<text x="247" y="204" font-family="DejaVu Sans Mono,monospace" font-size="14" fill="#a1aab5">REF f2396198749e</text>
+<text x="247" y="204" font-family="DejaVu Sans Mono,monospace" font-size="18" fill="#a1aab5">REF f2396198749e</text>
 </g>
 <g data-card="1">
 <rect x="490" y="88" width="446" height="130" rx="10" fill="#10151c" stroke="#30363d"/>
@@ -20,7 +20,7 @@
 <text x="713" y="145" font-size="18" fill="#a1aab5">Neural dynamics</text>
 <text x="713" y="167" font-size="18" fill="#a1aab5">AdEx · STDP</text>
 <path d="M690 182H736" stroke="#f85149" stroke-width="1.2" opacity=".75"/>
-<text x="713" y="204" font-family="DejaVu Sans Mono,monospace" font-size="14" fill="#a1aab5">REF c1de425ce4ec</text>
+<text x="713" y="204" font-family="DejaVu Sans Mono,monospace" font-size="18" fill="#a1aab5">REF c1de425ce4ec</text>
 </g>
 <g data-card="2">
 <rect x="24" y="234" width="446" height="130" rx="10" fill="#10151c" stroke="#30363d"/>
@@ -28,7 +28,7 @@
 <text x="247" y="291" font-size="18" fill="#a1aab5">Quantitative research</text>
 <text x="247" y="313" font-size="18" fill="#a1aab5">Data contracts</text>
 <path d="M224 328H270" stroke="#f85149" stroke-width="1.2" opacity=".75"/>
-<text x="247" y="350" font-family="DejaVu Sans Mono,monospace" font-size="14" fill="#a1aab5">REF 2d96756164e1</text>
+<text x="247" y="350" font-family="DejaVu Sans Mono,monospace" font-size="18" fill="#a1aab5">REF 2d96756164e1</text>
 </g>
 <g data-card="3">
 <rect x="490" y="234" width="446" height="130" rx="10" fill="#10151c" stroke="#30363d"/>
@@ -36,7 +36,7 @@
 <text x="713" y="291" font-size="18" fill="#a1aab5">Scaling diagnostics</text>
 <text x="713" y="313" font-size="18" fill="#a1aab5">Null models</text>
 <path d="M690 328H736" stroke="#f85149" stroke-width="1.2" opacity=".75"/>
-<text x="713" y="350" font-family="DejaVu Sans Mono,monospace" font-size="14" fill="#a1aab5">REF f70e16a97dcf</text>
+<text x="713" y="350" font-family="DejaVu Sans Mono,monospace" font-size="18" fill="#a1aab5">REF f70e16a97dcf</text>
 </g>
 <g data-card="4">
 <rect x="24" y="380" width="446" height="130" rx="10" fill="#10151c" stroke="#30363d"/>
@@ -44,7 +44,7 @@
 <text x="247" y="437" font-size="18" fill="#a1aab5">Evidence-bound</text>
 <text x="247" y="459" font-size="18" fill="#a1aab5">inference</text>
 <path d="M224 474H270" stroke="#f85149" stroke-width="1.2" opacity=".75"/>
-<text x="247" y="496" font-family="DejaVu Sans Mono,monospace" font-size="14" fill="#a1aab5">REF cda9db4ae2e4</text>
+<text x="247" y="496" font-family="DejaVu Sans Mono,monospace" font-size="18" fill="#a1aab5">REF cda9db4ae2e4</text>
 </g>
 <g data-card="5">
 <rect x="490" y="380" width="446" height="130" rx="10" fill="#10151c" stroke="#30363d"/>
@@ -52,7 +52,7 @@
 <text x="713" y="437" font-size="18" fill="#a1aab5">Inspect · Reproduce</text>
 <text x="713" y="459" font-size="18" fill="#a1aab5">Falsify · Challenge</text>
 <path d="M690 474H736" stroke="#f85149" stroke-width="1.2" opacity=".75"/>
-<text x="713" y="496" font-family="DejaVu Sans Mono,monospace" font-size="14" fill="#a1aab5">ATLAS 6fc046f254</text>
+<text x="713" y="496" font-family="DejaVu Sans Mono,monospace" font-size="18" fill="#a1aab5">ATLAS 2509083da2</text>
 </g>
-<text x="480" y="539" font-size="14" fill="#a1aab5">PINNED SOURCE REFERENCES · 2026-10-12</text>
+<text x="480" y="539" font-size="18" fill="#a1aab5">PINNED SOURCE REFERENCES · 2026-10-12</text>
 </g></svg>

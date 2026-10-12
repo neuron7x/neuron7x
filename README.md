@@ -35,6 +35,8 @@ and replayable evidence.
     <picture>
       <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="./assets/research-atlas-mobile-dark.svg">
       <source media="(max-width: 600px)" srcset="./assets/research-atlas-mobile-light.svg">
+      <source media="(max-width: 1100px) and (prefers-color-scheme: dark)" srcset="./assets/research-atlas-compact-dark.svg">
+      <source media="(max-width: 1100px)" srcset="./assets/research-atlas-compact-light.svg">
       <source media="(prefers-color-scheme: dark)" srcset="./assets/research-atlas-dark.svg">
       <img src="./assets/research-atlas-light.svg" width="100%" alt="Research Evidence Atlas: CWC, BN-Syn, GeoSync, neosynaptex, KORPUS, and the common inspection method">
     </picture>

@@ -94,7 +94,11 @@
       },
       "probe_kind": "Adversarial schema test",
       "repository": "neuron7x/Kuramoto-synchronization-model",
-      "commit": "2d96756164e14f9ea24abe9c5ba3a3ff27cc1780"
+      "commit": "2d96756164e14f9ea24abe9c5ba3a3ff27cc1780",
+      "mobile_subtitle": [
+        "Quantitative",
+        "Data contracts"
+      ]
     },
     {
       "slug": "neosynaptex",

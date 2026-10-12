@@ -2,7 +2,7 @@
 
 A source-pinned route from a research mechanism to its reproduction guide, an adversarial probe or counterexample, and the limit of the resulting claim.
 
-**Source snapshot:** 2026-10-12 · **Atlas fingerprint:** `6fc046f2545d955ea9617ef4726c27c42e9a5915601d17f7ba1e8ad008ae831d`
+**Source snapshot:** 2026-10-12 · **Atlas fingerprint:** `2509083da25b2c45b6df883528147a9534cb9e0c593f2c812c92ea1d6e5fea9e`
 
 Source references and blob identities verified. Project test suites and experiments were not executed for this profile update.
 

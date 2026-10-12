@@ -61,24 +61,24 @@ def source_url(project: dict, role: str) -> str:
     return f"https://github.com/{project['repository']}/blob/{project['commit']}/{quote(project['files'][role]['path'], safe='/')}"
 
 
-def svg(data: dict, theme: str, mobile: bool) -> str:
+def svg(data: dict, theme: str, mobile: bool, compact: bool = False) -> str:
     colors = PALETTES[theme]
-    width, margin, gap = (480, 12, 12) if mobile else (960, 24, 20)
+    width, margin, gap = (400, 10, 10) if mobile else ((640, 16, 16) if compact else (960, 24, 20))
     card_width = (width - 2 * margin - gap) / 2
     card_height, row_gap, start = 130, 16, 88
-    cards = [(p["name"], p["subtitle"], "REF " + p["commit"][:12]) for p in data["projects"]]
+    cards = [(p["name"], p.get("mobile_subtitle", p["subtitle"]) if mobile else p["subtitle"], "REF " + p["commit"][:12]) for p in data["projects"]]
     cards.append(("METHOD", ["Inspect · Reproduce", "Falsify · Challenge"], "ATLAS " + fingerprint(data)[:10]))
     rows = (len(cards) + 1) // 2
     height = start + rows * card_height + (rows - 1) * row_gap + 42
-    body_font, ref_font = (17, 15) if mobile else (18, 14)
+    body_font, ref_font = (16, 16) if mobile else (18, 18)
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">',
         '<title id="title">NEURON7X Research Evidence Atlas</title>',
-        '<desc id="desc">Five public research projects and a common inspection method. The cards are a portfolio index, not an integrated system architecture. REF identifies a source commit, not a performance score. Open the linked atlas for mechanisms, reproduction guides, probes, and claim boundaries.</desc>',
+        '<desc id="desc">Public research projects and a common inspection method. The cards are a portfolio index, not an integrated system architecture. REF identifies a source commit, not a performance score. Open the linked atlas for mechanisms, reproduction guides, probes, and claim boundaries.</desc>',
         f'<rect width="{width}" height="{height}" fill="{colors["bg"]}"/>',
         f'<g font-family="DejaVu Sans,Arial,sans-serif" text-anchor="middle" fill="{colors["fg"]}">',
         f'<text x="{width/2:g}" y="32" font-size="22" font-weight="600" letter-spacing="1">RESEARCH EVIDENCE ATLAS</text>',
-        f'<text x="{width/2:g}" y="59" font-size="{16 if mobile else 15}" fill="{colors["muted"]}">Mechanism · Probe · Claim boundary</text>',
+        f'<text x="{width/2:g}" y="59" font-size="16" fill="{colors["muted"]}">Mechanism · Probe · Claim boundary</text>',
         f'<path d="M{width/2-32:g} 73H{width/2+32:g}" stroke="{colors["red"]}" stroke-width="2"/>',
     ]
     for index, (name, subtitle, ref) in enumerate(cards):
@@ -90,7 +90,7 @@ def svg(data: dict, theme: str, mobile: bool) -> str:
         parts.extend([
             f'<g data-card="{index}">',
             f'<rect x="{x:g}" y="{y:g}" width="{w:g}" height="{card_height}" rx="10" fill="{colors["panel"]}" stroke="{colors["border"]}"/>',
-            f'<text x="{cx:g}" y="{y+31:g}" font-size="24" font-weight="600">{html.escape(name)}</text>',
+            f'<text x="{cx:g}" y="{y+31:g}" font-size="{22 if mobile else 24}" font-weight="600">{html.escape(name)}</text>',
             f'<text x="{cx:g}" y="{y+57:g}" font-size="{body_font}" fill="{colors["muted"]}">{html.escape(subtitle[0])}</text>',
             f'<text x="{cx:g}" y="{y+79:g}" font-size="{body_font}" fill="{colors["muted"]}">{html.escape(subtitle[1])}</text>',
             f'<path d="M{cx-23:g} {y+94:g}H{cx+23:g}" stroke="{colors["red"]}" stroke-width="1.2" opacity=".75"/>',
@@ -98,7 +98,7 @@ def svg(data: dict, theme: str, mobile: bool) -> str:
             '</g>',
         ])
     parts.extend([
-        f'<text x="{width/2:g}" y="{height-13}" font-size="{15 if mobile else 14}" fill="{colors["muted"]}">PINNED SOURCE REFERENCES · {html.escape(data["verified_date"])}</text>',
+        f'<text x="{width/2:g}" y="{height-13}" font-size="{16 if mobile else 18}" fill="{colors["muted"]}">PINNED SOURCE REFERENCES · {html.escape(data["verified_date"])}</text>',
         '</g></svg>',
     ])
     return "\n".join(parts) + "\n"
@@ -251,9 +251,10 @@ def main() -> int:
     data = load_manifest()
     outputs = {ROOT / 'RESEARCH_ATLAS.md': document(data), ROOT / '.github/ISSUE_TEMPLATE/research-challenge.yml': issue_form(data)}
     for theme in PALETTES:
-        for mobile in (False, True):
-            name = f"research-atlas-{'mobile-' if mobile else ''}{theme}.svg"
-            outputs[ROOT / 'assets' / name] = svg(data, theme, mobile)
+        for size in ('desktop', 'compact', 'mobile'):
+            prefix = '' if size == 'desktop' else size + '-'
+            name = f"research-atlas-{prefix}{theme}.svg"
+            outputs[ROOT / 'assets' / name] = svg(data, theme, size == 'mobile', size == 'compact')
     mismatches = []
     for path, content in outputs.items():
         expected = content.encode()
