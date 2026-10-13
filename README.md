@@ -1,8 +1,11 @@
 <p align="center">
-  <img src="./assets/neuro-code.webp" width="100%" alt="Neural code animation" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/neuro-code-dark.webp">
+    <img src="./assets/neuro-code-light.webp" width="100%" alt="Neural code animation" />
+  </picture>
 </p>
 
-<!-- The original brain animation is intentional. Preserve its file and reference. -->
+<!-- Theme derivatives preserve the original motion and timing. Keep assets/neuro-code.webp unchanged as the source. -->
 
 <h1 align="center">Yaroslav Vasylenko</h1>
 
