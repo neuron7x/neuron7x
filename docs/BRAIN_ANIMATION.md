@@ -1,34 +1,20 @@
-# Brain animation theme integration
+# Brain theme integration — prepared, not deployed
 
-The source `assets/neuro-code.webp` is retained byte-for-byte. The README
-selects transparent light/dark derivatives with GitHub's supported `picture`
-markup. Full transparency at the canvas boundary exposes the actual page
-background, including dimmed and high-contrast themes; no page colour is
-baked into either asset.
+![Decoded animation on light, dark and dimmed backgrounds](./brain-theme-preview.png)
 
-Both derivatives retain 1200 × 480 spatial coordinates, 475 frames, every
-source frame duration, the 39,583 ms cycle and infinite looping. There is no
-crop, resize, frame interpolation, regenerated anatomy, or change of motion.
+The live profile and original animation are unchanged. This branch contains the renderer and a frame-237 compositing preview. The generated animated binaries are not in this branch: connector upload failed for the large files, and GitHub Actions could not start because GitHub reported an account billing lock.
 
-The dark derivative removes the black matte with soft alpha and compensates
-edge RGB. The light derivative maps the same source hue and intensity to
-translucent coloured ink. This changes contrast for a light background.
-The original is already lossy; these derivatives are also lossy. Pixelwise
-colour identity and a recoverable original alpha channel are not claimed.
+Locally verified output: 475 frames, 1200 × 480, 39,583 ms, every original frame duration and infinite looping preserved. Canvas edges are fully transparent. Colour adaptation is lossy; pixel identity is not claimed. The dark file is 22.3 MB and the light file 24.8 MB, compared with the 7.4 MB original.
 
-Reproduce with Python, Pillow 12.3.0 and NumPy 2.3.5:
+To finish from a local checkout, run `python tools/render_brain_transparency.py` with Pillow 12.3.0 and NumPy 2.3.5, add both generated WebP files and the JSON report, and replace only the first image in README with:
 
-```sh
-python tools/render_brain_transparency.py
+```html
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/neuro-code-dark.webp">
+    <img src="./assets/neuro-code-light.webp" width="100%" alt="Neural code animation" />
+  </picture>
+</p>
 ```
 
-The renderer verifies source SHA-256, frame count, dimensions, each frame's
-duration, looping, transparent canvas edges, and transparency wherever the
-source was exactly black. It writes `assets/neuro-code-transparency.json`.
-The dark report also measures the error after compositing back onto black.
-This metric measures conversion fidelity, not visual accessibility.
-
-Only the hero image markup is changed. The source image, profile text,
-research atlas and other visual assets remain as they were.
-
-Reference: https://github.blog/changelog/2022-08-15-specify-theme-context-for-images-in-markdown-ga/
+Retain `assets/neuro-code.webp` unchanged as the source. The self-contained download package also contains already-generated binaries and a checksum-guarded application helper, so rerendering is optional.
