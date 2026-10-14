@@ -69,7 +69,7 @@ export function render(m,theme,small=false){
   out.push(`<text x="${x}" y="${Y+52}" text-anchor="middle" font-size="${small?8:10}" fill="${c.thin}">${distinct(p)} SOURCES</text></g>`);
  }
  out.push(`<path d="M ${small?12:28} ${H-18} H ${W-(small?12:28)}" stroke="${c.stroke}" opacity=".6" stroke-width=".7"/>`);
- out.push(`<text x="${W/2}" y="${H-6}" text-anchor="middle" font-size="${small?8:11}" fill="${c.mid}">${all.length} PINNED ROUTES · ${unique} DISTINCT FILES · NO EXPERIMENT CLAIM</text></g></svg>`);
+ out.push(`<text x="${W/2}" y="${H-6}" text-anchor="middle" font-size="${small?8:11}" fill="${c.mid}">${all.length} PINNED ROUTES · ${unique} DISTINCT SOURCES · NO EXPERIMENT CLAIM</text></g></svg>`);
  return out.join("\n")+"\n";
 }
 export function images(m){const o={};for(const theme of ["dark","light"]){o[`assets/epistemic-signal-${theme}.svg`]=render(m,theme);o[`assets/epistemic-signal-mobile-${theme}.svg`]=render(m,theme,true);}return o;}

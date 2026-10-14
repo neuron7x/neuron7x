@@ -14,7 +14,7 @@ test("scope is source identity, not validation of claims",()=>{
 test("four theme/size variants are transparent and bounded",()=>{
  const all=images(atlas);assert.equal(Object.keys(all).length,4);
  for(const s of Object.values(all)){
-  assert.match(s,/20 PINNED ROUTES · 19 DISTINCT FILES · NO EXPERIMENT CLAIM/);
+  assert.match(s,/20 PINNED ROUTES · 19 DISTINCT SOURCES · NO EXPERIMENT CLAIM/);
   assert.equal((s.match(/data-role="falsify"/g)||[]).length,5);
   assert.equal((s.match(/data-shared-source="true"/g)||[]).length,1);
   assert.doesNotMatch(s,/<(?:script|foreignObject|animate|image|rect)\b/i);
