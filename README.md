@@ -108,10 +108,14 @@ agent reliability.
 [NEURON7X services](https://neuron7x-site-140887.gitlab.io/)
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/research-signature-dark.svg">
-    <img src="./assets/research-signature-light.svg" width="100%" alt="Decorative phase signature: dynamics, control, and evidence">
-  </picture>
+  <a href="./EVIDENCE_INTERFACE.md">
+    <picture>
+      <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="./assets/epistemic-signal-mobile-dark.svg">
+      <source media="(max-width: 600px)" srcset="./assets/epistemic-signal-mobile-light.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="./assets/epistemic-signal-dark.svg">
+      <img src="./assets/epistemic-signal-light.svg" width="100%" alt="Epistemic Signal: five research nodes, each with four commit-pinned reference routes, not experiment or replication status">
+    </picture>
+  </a>
 </p>
 
 <p align="center"><sub>⊛ Vita est certamine.</sub></p>
