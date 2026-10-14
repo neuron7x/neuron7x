@@ -7,28 +7,19 @@
 <h1 align="center">Yaroslav Vasylenko</h1>
 
 <p align="center">
-  <strong>Independent NeuroAI Researcher · AI Systems Architect</strong><br>
-  Computational neuroscience · Cognitive architectures · Technical AI safety
+  Independent NeuroAI Researcher · AI Systems Architect<br>
+  Neural dynamics · Causal identification · Technical AI safety
 </p>
 
-<p align="center">
-  <a href="#selected-research">Research</a> ·
-  <a href="#engineering-practice">Engineering</a> ·
-  <a href="#collaborate">Collaborate</a>
-</p>
+I study when an adaptive system's behavior supports an inference about
+its mechanism—and when the evidence cannot distinguish competing explanations.
 
-I translate neural and cognitive mechanisms into computational models,
-constrained controllers, and reproducible evaluation systems. My research
-asks which adaptive mechanisms change behavior under controlled interventions
-and explicit compute budgets—and where those mechanisms fail.
+My work spans computational neuroscience, cognitive architectures, and
+reliable AI systems. The approach is consistent: state the assumptions,
+test interventions, search for counterexamples, and preserve the limits
+of each claim.
 
-At the AI systems layer, I build explicit control around probabilistic
-generation: typed contracts, bounded authority, fail-closed decisions,
-and replayable evidence.
-
-**Ukraine · Independent research · Remote collaboration**
-
-## Selected research
+### Research
 
 <p align="center">
   <a href="./RESEARCH_ATLAS.md">
@@ -51,63 +42,69 @@ and replayable evidence.
   <a href="./RESEARCH_ATLAS.md#korpus">KORPUS</a>
 </p>
 
-Each project has a commit-pinned route to its mechanism, reproduction guide,
-adversarial probe or counterexample, and claim boundary. The atlas makes
-the source revision explicit and keeps the limits of the evidence visible.
+Five selected projects, with source-pinned routes to a mechanism,
+reproduction guide, adversarial probe or counterexample, and claim boundary.
+A source reference establishes provenance; it does not establish that
+an experiment was executed or independently replicated.
 
 <p align="center">
-  <a href="./RESEARCH_ATLAS.md"><strong>Explore the atlas →</strong></a> ·
+  <a href="./RESEARCH_ATLAS.md">Inspect the evidence</a> ·
   <a href="https://github.com/neuron7x/neuron7x/issues/new?template=research-challenge.yml">Challenge a result</a>
 </p>
 
-CWC builds on [Andrej Karpathy's nanochat](https://github.com/karpathy/nanochat).
-The original contribution is the CWC research, instrumentation, and evaluation
-layer; upstream attribution is preserved in the repository.
+CWC extends <a href="https://github.com/karpathy/nanochat">Andrej Karpathy's nanochat</a>.
+Its research, instrumentation, and evaluation layer is distinct from
+the attributed upstream work.
 
-## Engineering practice
+### Inference
 
-I work from **mechanism → invariant → falsifier → evidence**.
+A bounded, deterministic gate compares declared candidate models with
+supplied observations. It can propose a discriminating intervention,
+reject the declared model class, or abstain. Selecting one surviving
+model does not grant causal authority.
 
-**Executable inference:** [Conditional Inference Gate](./INFERENCE_RUNTIME.md) · [Offline runner](./tools/run_inference.mjs) · [Falsification traces](./inference/results/). Source references never become proof of experimental validity.
+[Inference protocol](./INFERENCE_RUNTIME.md) ·
+[Executable kernel](./inference/kernel.mjs) ·
+[Falsification traces](./inference/results/)
 
-- **Causal evaluation:** controlled interventions, ablations, matched baselines,
-  and explicit limits on inference.
-- **Neural and cognitive systems:** dynamical models, constrained autonomy,
-  and inspectable state transitions.
-- **Agent reliability:** tool boundaries, structured outputs, policy gates,
-  and separation of generation from acceptance.
-- **Software assurance:** property-based and mutation testing, deterministic
-  replay, schema validation, provenance, and CI gates.
+### Engineering
 
-**Core tools:** Python · NumPy / SciPy · FastAPI / Pydantic ·
-pytest / Hypothesis · Docker · Linux · GitHub Actions / GitLab CI
+Probabilistic generation proposes. Deterministic contracts govern acceptance.
+
+Mechanism → assumption → falsifier → evidence → admissible decision.
+
+I build inspectable model and tool boundaries: typed interfaces,
+bounded authority, reproducible runs, and explicit failure conditions.
+The standard is not a plausible answer, but an outcome that can be
+tested against a declared contract.
 
 <details>
-<summary><strong>Evidence and scope</strong></summary>
+<summary>Methods, tooling, and evidence limits</summary>
 
-Experimental findings are conditional on their documented substrates,
-datasets, interventions, and compute budgets. Negative results remain part
-of the research record.
+Controlled interventions, ablations, matched baselines, dynamical
+simulation, property-based and mutation testing, deterministic replay,
+and source-level provenance.
 
-CWC's budgeted-computation programme and BN-Syn's neural simulations remain
-research work. KORPUS distinguishes engineering checks from production
-authorization. The neosynaptex canon records why an estimated γ ≈ 1 alone
-cannot establish criticality or metastability.
+Python · NumPy / SciPy · FastAPI / Pydantic · pytest / Hypothesis ·
+Docker · Linux · Git / GitLab CI
 
-Current status and supporting evidence belong to the linked project sources.
-Independent replication and deployment require their own evidence.
+CWC's causal candidates remain conditional on identifying assumptions.
+BN-Syn's numerical properties do not establish biological fidelity.
+The neosynaptex γ ≈ 1 marker is not, by itself, evidence of criticality.
+KORPUS distinguishes engineering checks from release authorization.
+Independent replication and deployment require separate evidence.
 
 </details>
 
-## Collaborate
+### Collaborate
 
-Open to research collaboration and focused engineering engagements in
-NeuroAI, cognitive architectures, technical AI safety evaluation, and
-agent reliability.
+Independent research from Ukraine. Open to focused collaborations in
+NeuroAI, cognitive architectures, technical AI safety, and
+evidence-bound agent engineering.
 
 [Email](mailto:neuron7x@gmail.com) ·
 [Telegram](https://t.me/neuron7x) ·
-[NEURON7X services](https://neuron7x-site-140887.gitlab.io/)
+[Engineering services](https://neuron7x-site-140887.gitlab.io/)
 
 <p align="center">
   <a href="./EVIDENCE_INTERFACE.md">
