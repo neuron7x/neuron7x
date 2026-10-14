@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="181" viewBox="0 0 1040 181" role="img" aria-labelledby="title description">
+<title id="title">NEURON7X — Epistemic Signal</title>
+<desc id="description">Five projects, four pinned source-reference routes each: inspect, reproduce, falsify and boundary. Shared source blobs have a bridge. 19 distinct source files. The curved lines are deterministic decorative identifiers, not observed neural dynamics. No experiments or independent replication were executed or confirmed by this visual index. Source snapshot 2026-10-12.</desc>
+<g font-family="Arial,DejaVu Sans,sans-serif">
+<text x="28" y="23" fill="#1f2328" font-size="17" font-weight="600" letter-spacing=".6">⊛ EPISTEMIC SIGNAL</text>
+<text x="1012" y="22" text-anchor="end" fill="#59636e" font-size="11">REF 2026-10-12 · d23d8ce9</text>
+<path d="M 28 34 H 1012" stroke="#8d97a1" opacity=".65" stroke-width=".7"/>
+<path d="M 137 99 C 184 101, 256 97, 303 99" fill="none" stroke="#8d97a1" opacity=".72" stroke-width="1.2"/>
+<path d="M 137 103 Q 220 107.7, 303 103" fill="none" stroke="#bd3346" opacity=".25" stroke-width=".65"/>
+<path d="M 337 99 C 384 95, 456 103, 503 99" fill="none" stroke="#8d97a1" opacity=".72" stroke-width="1.2"/>
+<path d="M 337 103 Q 420 105.6, 503 103" fill="none" stroke="#bd3346" opacity=".25" stroke-width=".65"/>
+<path d="M 537 99 C 584 103, 656 95, 703 99" fill="none" stroke="#8d97a1" opacity=".72" stroke-width="1.2"/>
+<path d="M 537 103 Q 620 108.4, 703 103" fill="none" stroke="#bd3346" opacity=".25" stroke-width=".65"/>
+<path d="M 737 99 C 784 103, 856 95, 903 99" fill="none" stroke="#8d97a1" opacity=".72" stroke-width="1.2"/>
+<path d="M 737 103 Q 820 108.4, 903 103" fill="none" stroke="#bd3346" opacity=".25" stroke-width=".65"/>
+<g data-project="cwc">
+<text x="120" y="58" text-anchor="middle" fill="#1f2328" font-size="15" font-weight="600">CWC</text>
+<circle cx="120" cy="99" r="13" fill="none" stroke="#8d97a1" stroke-width="1.2"/>
+<path d="M 110 91 A 13 13 0 0 1 130 91" fill="none" stroke="#bd3346" stroke-width="1.2" opacity=".8" transform="rotate(21 120 99)"/>
+<circle cx="120" cy="99" r="2.7" fill="#bd3346"/>
+<circle data-role="inspect" cx="120" cy="80" r="3" fill="#59636e"/>
+<circle data-role="reproduce" cx="139" cy="99" r="3" fill="#59636e"/>
+<circle data-role="falsify" cx="120" cy="118" r="3" fill="#bd3346"/>
+<circle data-role="boundary" cx="101" cy="99" r="3" fill="#59636e"/>
+<text x="120" y="136" text-anchor="middle" font-family="Consolas,DejaVu Sans Mono,monospace" font-size="11" fill="#59636e">f23961987</text>
+<text x="120" y="151" text-anchor="middle" font-size="10" fill="#6e7781">4 SOURCES</text></g>
+<g data-project="bnsyn">
+<text x="320" y="58" text-anchor="middle" fill="#1f2328" font-size="15" font-weight="600">BN-Syn</text>
+<circle cx="320" cy="99" r="13" fill="none" stroke="#8d97a1" stroke-width="1.2"/>
+<path d="M 310 91 A 13 13 0 0 1 330 91" fill="none" stroke="#bd3346" stroke-width="1.2" opacity=".8" transform="rotate(-9 320 99)"/>
+<circle cx="320" cy="99" r="2.7" fill="#bd3346"/>
+<circle data-role="inspect" cx="320" cy="80" r="3" fill="#59636e"/>
+<circle data-role="reproduce" cx="339" cy="99" r="3" fill="#59636e"/>
+<circle data-role="falsify" cx="320" cy="118" r="3" fill="#bd3346"/>
+<circle data-role="boundary" cx="301" cy="99" r="3" fill="#59636e"/>
+<text x="320" y="136" text-anchor="middle" font-family="Consolas,DejaVu Sans Mono,monospace" font-size="11" fill="#59636e">c1de425ce</text>
+<text x="320" y="151" text-anchor="middle" font-size="10" fill="#6e7781">4 SOURCES</text></g>
+<g data-project="geosync">
+<text x="520" y="58" text-anchor="middle" fill="#1f2328" font-size="15" font-weight="600">GeoSync</text>
+<circle cx="520" cy="99" r="13" fill="none" stroke="#8d97a1" stroke-width="1.2"/>
+<path d="M 510 91 A 13 13 0 0 1 530 91" fill="none" stroke="#bd3346" stroke-width="1.2" opacity=".8" transform="rotate(14 520 99)"/>
+<circle cx="520" cy="99" r="2.7" fill="#bd3346"/>
+<circle data-role="inspect" cx="520" cy="80" r="3" fill="#59636e"/>
+<circle data-role="reproduce" cx="539" cy="99" r="3" fill="#59636e"/>
+<circle data-role="falsify" cx="520" cy="118" r="3" fill="#bd3346"/>
+<circle data-role="boundary" cx="501" cy="99" r="3" fill="#59636e"/>
+<text x="520" y="136" text-anchor="middle" font-family="Consolas,DejaVu Sans Mono,monospace" font-size="11" fill="#59636e">2d9675616</text>
+<text x="520" y="151" text-anchor="middle" font-size="10" fill="#6e7781">4 SOURCES</text></g>
+<g data-project="neosynaptex">
+<text x="720" y="58" text-anchor="middle" fill="#1f2328" font-size="15" font-weight="600">neosynaptex</text>
+<circle cx="720" cy="99" r="13" fill="none" stroke="#8d97a1" stroke-width="1.2"/>
+<path d="M 710 91 A 13 13 0 0 1 730 91" fill="none" stroke="#bd3346" stroke-width="1.2" opacity=".8" transform="rotate(-17 720 99)"/>
+<circle cx="720" cy="99" r="2.7" fill="#bd3346"/>
+<circle data-role="inspect" cx="720" cy="80" r="3" fill="#59636e"/>
+<circle data-role="reproduce" cx="739" cy="99" r="3" fill="#59636e"/>
+<circle data-role="falsify" cx="720" cy="118" r="3" fill="#bd3346"/>
+<circle data-role="boundary" cx="701" cy="99" r="3" fill="#59636e"/>
+<text x="720" y="136" text-anchor="middle" font-family="Consolas,DejaVu Sans Mono,monospace" font-size="11" fill="#59636e">f70e16a97</text>
+<text x="720" y="151" text-anchor="middle" font-size="10" fill="#6e7781">4 SOURCES</text></g>
+<g data-project="korpus">
+<text x="920" y="58" text-anchor="middle" fill="#1f2328" font-size="15" font-weight="600">KORPUS</text>
+<circle cx="920" cy="99" r="13" fill="none" stroke="#8d97a1" stroke-width="1.2"/>
+<path d="M 910 91 A 13 13 0 0 1 930 91" fill="none" stroke="#bd3346" stroke-width="1.2" opacity=".8" transform="rotate(16 920 99)"/>
+<circle cx="920" cy="99" r="2.7" fill="#bd3346"/>
+<circle data-role="inspect" cx="920" cy="80" r="3" fill="#59636e"/>
+<circle data-role="reproduce" cx="939" cy="99" r="3" fill="#59636e"/>
+<circle data-role="falsify" cx="920" cy="118" r="3" fill="#bd3346"/>
+<circle data-role="boundary" cx="901" cy="99" r="3" fill="#59636e"/>
+<path data-shared-source="true" d="M 939 99 Q 893 72, 901 99" fill="none" stroke="#bd3346" stroke-width="1" stroke-dasharray="2 2"/>
+<text x="920" y="136" text-anchor="middle" font-family="Consolas,DejaVu Sans Mono,monospace" font-size="11" fill="#59636e">cda9db4ae</text>
+<text x="920" y="151" text-anchor="middle" font-size="10" fill="#6e7781">3 SOURCES</text></g>
+<path d="M 28 163 H 1012" stroke="#8d97a1" opacity=".6" stroke-width=".7"/>
+<text x="520" y="175" text-anchor="middle" font-size="11" fill="#59636e">20 PINNED ROUTES · 19 DISTINCT FILES · NO EXPERIMENT CLAIM</text></g></svg>

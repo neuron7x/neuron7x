@@ -1,0 +1,50 @@
+name: Epistemic signal conformance
+on:
+  pull_request:
+    paths:
+      - README.md
+      - EVIDENCE_INTERFACE.md
+      - research/atlas.json
+      - tools/render_epistemic_signal.mjs
+      - tools/render_research_atlas.py
+      - tests/epistemic_signal.test.mjs
+      - assets/epistemic-signal-*.svg
+      - .github/workflows/epistemic-signal.yml
+  push:
+    branches: [main]
+    paths:
+      - README.md
+      - research/atlas.json
+      - tools/render_epistemic_signal.mjs
+      - tests/epistemic_signal.test.mjs
+      - assets/epistemic-signal-*.svg
+      - .github/workflows/epistemic-signal.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-visual-conformance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout immutable revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Validate deterministic research artifacts
+        run: |
+          node --version
+          node --test tests/epistemic_signal.test.mjs
+          node tools/render_epistemic_signal.mjs --check
+          python3 tools/render_research_atlas.py --check
+      - name: Parse SVG via Python standard library
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from xml.etree import ElementTree as ET
+          paths = sorted(Path("assets").glob("epistemic-signal-*.svg"))
+          assert len(paths) == 4, paths
+          for path in paths:
+              ET.parse(path)
+              print("WELL_FORMED:", path)
+          PY
