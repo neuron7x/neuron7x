@@ -19,7 +19,7 @@ node --test tests/epistemic_signal.test.mjs
 python3 tools/render_research_atlas.py --check
 ```
 
-Standard Node.js 20+; no external npm dependencies or network operations. The generator fails closed on missing or extra evidence roles, non-SHA references, unsafe paths, duplicate slugs, and verification-scope mismatches. The four transparent SVGs cover desktop/mobile and dark/light theme variants. Their structured text and XML are checked by GitHub Actions.
+Standard Node.js 20+; no external npm dependencies or network operations. The generator fails closed on missing or extra evidence roles, non-SHA references, unsafe paths, duplicate slugs, and verification-scope mismatches. The four transparent SVGs cover desktop/mobile and dark/light theme variants. Verification is deliberately offline: run the standard-library commands above before publishing source changes. GitHub Actions is not configured for this profile, so no paid or account-billing-dependent CI is required. This repository does not claim continuously running automated checks.
 
 **Protected:** the original `assets/neuro-code.webp` animation and all existing Research Atlas outputs remain unchanged. The previous `assets/research-signature-*.svg` files remain in the repository for straightforward rollback.
 
