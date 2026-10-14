@@ -45,3 +45,21 @@ test("brain animation remains explicitly unmodified in README",()=>{
  assert.match(content,/\.\/assets\/epistemic-signal-mobile-dark\.svg/);
  assert.match(content,/\.\/assets\/epistemic-signal-light\.svg/);
 });
+
+test("eight nodes form two centered rows with bounded responsive geometry",()=>{
+ const expanded=JSON.parse(JSON.stringify(atlas));
+ for(let i=0;i<3;i++){
+  const project=JSON.parse(JSON.stringify(expanded.projects[i]));
+  project.slug="extension-"+i;
+  project.name="Extended"+i;
+  expanded.projects.push(project);
+ }
+ verify(expanded);
+ const wide=render(expanded,"dark");
+ const mobile=render(expanded,"light",true);
+ assert.match(wide,/viewBox="0 0 1040 305"/);
+ assert.match(mobile,/viewBox="0 0 500 305"/);
+ assert.equal((wide.match(/data-project="/g)||[]).length,8);
+ assert.equal((mobile.match(/data-project="/g)||[]).length,8);
+ assert.match(wide,/32 PINNED ROUTES/);
+});
