@@ -31,8 +31,9 @@ export function render(m,theme,small=false){
  verify(m);
  if(!["dark","light"].includes(theme))throw Error("Unknown theme");
  const c=theme==="dark"?{fg:"#e6edf3",mid:"#a1aab5",thin:"#69737e",stroke:"#525e6b",red:"#ff625b"}:{fg:"#1f2328",mid:"#59636e",thin:"#6e7781",stroke:"#8d97a1",red:"#bd3346"};
- const W=small?500:1040,H=181,Y=99;
- const X=m.projects.map((_,i)=>small?54+i*98:120+i*200);
+ const W=small?500:1040,rows=Math.ceil(m.projects.length/5),H=181+(rows-1)*124,Y=99;
+ const X=m.projects.map((_,i)=>{const row=Math.floor(i/5),count=Math.min(5,m.projects.length-row*5),gap=small?98:200;return (W-gap*(count-1))/2+(i%5)*gap});
+ const CY=m.projects.map((_,i)=>Y+Math.floor(i/5)*124);
  const all=m.projects.flatMap(p=>ROLES.map(r=>p.repository+"@"+p.commit+":"+p.files[r].blob));
  const unique=new Set(all).size;
  const visualKey=fnv32(all.join("|")).toString(16).padStart(8,"0");
@@ -46,27 +47,29 @@ export function render(m,theme,small=false){
  `<path d="M ${small?12:28} 34 H ${W-(small?12:28)}" stroke="${c.stroke}" opacity=".65" stroke-width=".7"/>`
  ];
  for(let i=0;i<X.length-1;i++){
+  if((i+1)%5===0)continue;
+  const Y=CY[i];
   const a=X[i],b=X[i+1],v=(fnv32(m.projects[i].commit+m.projects[i+1].commit)%19-9)*(small?.65:1);
   out.push(`<path d="M ${a+17} ${Y} C ${a+(b-a)*.32} ${Y+v}, ${a+(b-a)*.68} ${Y-v}, ${b-17} ${Y}" fill="none" stroke="${c.stroke}" opacity=".72" stroke-width="1.2"/>`);
   out.push(`<path d="M ${a+17} ${Y+4} Q ${(a+b)/2} ${Y+8+v*.35}, ${b-17} ${Y+4}" fill="none" stroke="${c.red}" opacity=".25" stroke-width=".65"/>`);
  }
  const ports=[[0,-19],[19,0],[0,19],[-19,0]];
  for(let i=0;i<m.projects.length;i++){
-  const p=m.projects[i],x=X[i],seed=fnv32(p.commit+ROLES.map(r=>p.files[r].blob).join(""));
+  const p=m.projects[i],x=X[i],Y=CY[i],seed=fnv32(p.commit+ROLES.map(r=>p.files[r].blob).join(""));
   const shared=[];
   for(let a=0;a<4;a++)for(let b=a+1;b<4;b++)if(p.files[ROLES[a]].blob===p.files[ROLES[b]].blob)shared.push([a,b]);
   out.push(`<g data-project="${escapeXml(p.slug)}">`);
-  out.push(`<text x="${x}" y="58" text-anchor="middle" fill="${c.fg}" font-size="${small?10:15}" font-weight="600">${escapeXml(small?p.name.slice(0,11):p.name)}</text>`);
+  out.push(`<text x="${x}" y="${Y-41}" text-anchor="middle" fill="${c.fg}" font-size="${small?10:15}" font-weight="600">${escapeXml(small?p.name.slice(0,11):p.name)}</text>`);
   out.push(`<circle cx="${x}" cy="${Y}" r="13" fill="none" stroke="${c.stroke}" stroke-width="1.2"/>`);
   out.push(`<path d="M ${x-10} ${Y-8} A 13 13 0 0 1 ${x+10} ${Y-8}" fill="none" stroke="${c.red}" stroke-width="1.2" opacity=".8" transform="rotate(${seed%45-22} ${x} ${Y})"/>`);
   out.push(`<circle cx="${x}" cy="${Y}" r="2.7" fill="${c.red}"/>`);
   for(let r=0;r<4;r++){const [dx,dy]=ports[r];out.push(`<circle data-role="${ROLES[r]}" cx="${x+dx}" cy="${Y+dy}" r="${small?2.5:3}" fill="${r===2?c.red:c.mid}"/>`);}
   for(const [a,b] of shared){const [ax,ay]=ports[a],[bx,by]=ports[b];out.push(`<path data-shared-source="true" d="M ${x+ax} ${Y+ay} Q ${x-27} ${Y-27}, ${x+bx} ${Y+by}" fill="none" stroke="${c.red}" stroke-width="1" stroke-dasharray="2 2"/>`);}
-  out.push(`<text x="${x}" y="136" text-anchor="middle" font-family="Consolas,DejaVu Sans Mono,monospace" font-size="${small?9:11}" fill="${c.mid}">${p.commit.slice(0,small?6:9)}</text>`);
-  out.push(`<text x="${x}" y="151" text-anchor="middle" font-size="${small?8:10}" fill="${c.thin}">${distinct(p)} SOURCES</text></g>`);
+  out.push(`<text x="${x}" y="${Y+37}" text-anchor="middle" font-family="Consolas,DejaVu Sans Mono,monospace" font-size="${small?9:11}" fill="${c.mid}">${p.commit.slice(0,small?6:9)}</text>`);
+  out.push(`<text x="${x}" y="${Y+52}" text-anchor="middle" font-size="${small?8:10}" fill="${c.thin}">${distinct(p)} SOURCES</text></g>`);
  }
- out.push(`<path d="M ${small?12:28} 163 H ${W-(small?12:28)}" stroke="${c.stroke}" opacity=".6" stroke-width=".7"/>`);
- out.push(`<text x="${W/2}" y="175" text-anchor="middle" font-size="${small?8:11}" fill="${c.mid}">${all.length} PINNED ROUTES · ${unique} DISTINCT FILES · NO EXPERIMENT CLAIM</text></g></svg>`);
+ out.push(`<path d="M ${small?12:28} ${H-18} H ${W-(small?12:28)}" stroke="${c.stroke}" opacity=".6" stroke-width=".7"/>`);
+ out.push(`<text x="${W/2}" y="${H-6}" text-anchor="middle" font-size="${small?8:11}" fill="${c.mid}">${all.length} PINNED ROUTES · ${unique} DISTINCT FILES · NO EXPERIMENT CLAIM</text></g></svg>`);
  return out.join("\n")+"\n";
 }
 export function images(m){const o={};for(const theme of ["dark","light"]){o[`assets/epistemic-signal-${theme}.svg`]=render(m,theme);o[`assets/epistemic-signal-mobile-${theme}.svg`]=render(m,theme,true);}return o;}
