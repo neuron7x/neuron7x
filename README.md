@@ -68,6 +68,8 @@ layer; upstream attribution is preserved in the repository.
 
 I work from **mechanism → invariant → falsifier → evidence**.
 
+**Executable inference:** [Conditional Inference Gate](./INFERENCE_RUNTIME.md) · [Offline runner](./tools/run_inference.mjs) · [Falsification traces](./inference/results/). Source references never become proof of experimental validity.
+
 - **Causal evaluation:** controlled interventions, ablations, matched baselines,
   and explicit limits on inference.
 - **Neural and cognitive systems:** dynamical models, constrained autonomy,

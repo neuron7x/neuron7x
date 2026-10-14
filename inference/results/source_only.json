@@ -1,0 +1,23 @@
+{
+  "protocol": "neuron7x.conditional-inference.v1",
+  "case_id": "source_only",
+  "basis": "synthetic",
+  "source_status": "PINNED_REFERENCE_ONLY",
+  "causal_authority": false,
+  "independent_replication": false,
+  "unresolved_assumptions": [
+    "candidate_class_completeness",
+    "intervention_fidelity",
+    "outcome_provenance",
+    "unmodelled_exogenous_mimickers"
+  ],
+  "verdict": "ABSTAIN",
+  "reason": "INSUFFICIENT_DISCRIMINATION",
+  "survivors": [
+    "AGENCY",
+    "MIMIC"
+  ],
+  "excluded": [],
+  "used_experiments": [],
+  "next_intervention": "do_toggle"
+}

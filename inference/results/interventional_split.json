@@ -1,0 +1,27 @@
+{
+  "protocol": "neuron7x.conditional-inference.v1",
+  "case_id": "interventional_split",
+  "basis": "synthetic",
+  "source_status": "PINNED_REFERENCE_ONLY",
+  "causal_authority": false,
+  "independent_replication": false,
+  "unresolved_assumptions": [
+    "candidate_class_completeness",
+    "intervention_fidelity",
+    "outcome_provenance",
+    "unmodelled_exogenous_mimickers"
+  ],
+  "verdict": "CONDITIONAL_MODEL_SELECTION",
+  "reason": "DECLARED_INTERVENTION_DISCRIMINATED_CANDIDATES",
+  "survivors": [
+    "AGENCY"
+  ],
+  "excluded": [
+    "MIMIC"
+  ],
+  "used_experiments": [
+    "do_toggle",
+    "observe"
+  ],
+  "next_intervention": null
+}

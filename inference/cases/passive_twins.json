@@ -1,0 +1,42 @@
+{
+  "schema": "neuron7x.conditional-inference.v1",
+  "basis": "synthetic",
+  "source": {
+    "project": "cwc",
+    "commit": "f2396198749ee9cf2d51078cc890e299f51d4bd9"
+  },
+  "budget": 2,
+  "experiments": [
+    {
+      "id": "observe",
+      "kind": "observation"
+    },
+    {
+      "id": "do_toggle",
+      "kind": "intervention"
+    }
+  ],
+  "models": [
+    {
+      "id": "AGENCY",
+      "predictions": {
+        "observe": "ZERO",
+        "do_toggle": "ONE"
+      }
+    },
+    {
+      "id": "MIMIC",
+      "predictions": {
+        "observe": "ZERO",
+        "do_toggle": "ZERO"
+      }
+    }
+  ],
+  "case_id": "passive_twins",
+  "observations": [
+    {
+      "experiment": "observe",
+      "outcome": "ZERO"
+    }
+  ]
+}

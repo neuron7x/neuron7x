@@ -1,0 +1,26 @@
+{
+  "protocol": "neuron7x.conditional-inference.v1",
+  "case_id": "model_class_refuted",
+  "basis": "synthetic",
+  "source_status": "PINNED_REFERENCE_ONLY",
+  "causal_authority": false,
+  "independent_replication": false,
+  "unresolved_assumptions": [
+    "candidate_class_completeness",
+    "intervention_fidelity",
+    "outcome_provenance",
+    "unmodelled_exogenous_mimickers"
+  ],
+  "verdict": "MODEL_CLASS_REFUTED",
+  "reason": "NO_DECLARED_MODEL_EXPLAINS_RECORD",
+  "survivors": [],
+  "excluded": [
+    "AGENCY",
+    "MIMIC"
+  ],
+  "used_experiments": [
+    "do_toggle",
+    "observe"
+  ],
+  "next_intervention": null
+}
