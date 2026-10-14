@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="500" height="181" viewBox="0 0 500 181" role="img" aria-labelledby="title description">
 <title id="title">NEURON7X — Epistemic Signal</title>
-<desc id="description">5 projects, four pinned source-reference routes each: inspect, reproduce, falsify and boundary. Shared source blobs have a bridge. 19 distinct source files. The curved lines are deterministic decorative identifiers, not observed neural dynamics. No experiments or independent replication were executed or confirmed by this visual index. Source snapshot 2026-10-12.</desc>
+<desc id="description">5 projects, four pinned source-reference routes each: inspect, reproduce, falsify and boundary. Shared source blobs have a bridge. 19 distinct versioned source identities. The curved lines are deterministic decorative identifiers, not observed neural dynamics. No experiments or independent replication were executed or confirmed by this visual index. Source snapshot 2026-10-12.</desc>
 <g font-family="Arial,DejaVu Sans,sans-serif">
 <text x="12" y="23" fill="#1f2328" font-size="13" font-weight="600" letter-spacing=".6">⊛ EPISTEMIC SIGNAL</text>
 <text x="488" y="22" text-anchor="end" fill="#59636e" font-size="9">REF 2026-10-12 · d23d8ce9</text>

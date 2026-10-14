@@ -40,7 +40,7 @@ export function render(m,theme,small=false){
  const out=[
  `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="title description">`,
  `<title id="title">NEURON7X — Epistemic Signal</title>`,
- `<desc id="description">${m.projects.length} projects, four pinned source-reference routes each: inspect, reproduce, falsify and boundary. Shared source blobs have a bridge. ${unique} distinct source files. The curved lines are deterministic decorative identifiers, not observed neural dynamics. No experiments or independent replication were executed or confirmed by this visual index. Source snapshot ${escapeXml(m.verified_date)}.</desc>`,
+ `<desc id="description">${m.projects.length} projects, four pinned source-reference routes each: inspect, reproduce, falsify and boundary. Shared source blobs have a bridge. ${unique} distinct versioned source identities. The curved lines are deterministic decorative identifiers, not observed neural dynamics. No experiments or independent replication were executed or confirmed by this visual index. Source snapshot ${escapeXml(m.verified_date)}.</desc>`,
  `<g font-family="Arial,DejaVu Sans,sans-serif">`,
  `<text x="${small?12:28}" y="23" fill="${c.fg}" font-size="${small?13:17}" font-weight="600" letter-spacing=".6">⊛ EPISTEMIC SIGNAL</text>`,
  `<text x="${W-(small?12:28)}" y="22" text-anchor="end" fill="${c.mid}" font-size="${small?9:11}">REF ${escapeXml(m.verified_date)} · ${visualKey}</text>`,
