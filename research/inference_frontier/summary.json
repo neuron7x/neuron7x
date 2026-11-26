@@ -1,0 +1,40 @@
+{
+  "schema": "a07-a08.v1",
+  "protocol": "20d7e3d02d7c2c682af4f25269b8f8da7cde148c",
+  "catalogs": 1820,
+  "horizons": [
+    {
+      "h": 1,
+      "maxCorrect": 1680,
+      "eligible": 0,
+      "falseAtA06Coverage": 0
+    },
+    {
+      "h": 2,
+      "maxCorrect": 6928,
+      "eligible": 1820,
+      "falseAtA06Coverage": 20784
+    },
+    {
+      "h": 3,
+      "maxCorrect": 7280,
+      "eligible": 1820,
+      "falseAtA06Coverage": 6928
+    },
+    {
+      "h": 4,
+      "maxCorrect": 7280,
+      "eligible": 1820,
+      "falseAtA06Coverage": 0
+    }
+  ],
+  "minimumBudget": 4,
+  "weighted": {
+    "baseline": 2017440,
+    "optimized": 1985280,
+    "mass": 2096640,
+    "improvedPairs": 3680,
+    "pairs": 43680
+  },
+  "decision": "REFUTED"
+}
