@@ -114,7 +114,9 @@ class ReleaseArchiveTest(unittest.TestCase):
         for text in ["# tests 1\n# pass 1\n", full.replace("# fail 0", "# fail 1"),
                      full.replace("# skipped 0", "# skipped 1"), full.replace("ok 1", "ok 2"),
                      full.replace("ok 1", "not ok 1 - hidden failure\nok 1"),
-                     full.replace("1..1", "1.." + "9" * 4400)]:
+                     full.replace("1..1", "1.." + "9" * 4400),
+                     full.replace("sample", "sample # SKIP"),
+                     full.replace("# tests 1", "# tests 100").replace("# pass 1", "# pass 100")]:
             self.assertFalse(gate.node_suite(subprocess.CompletedProcess([], 0, text, "")))
         python = "-" * 70 + "\nRan 1 test in 0.001s\n\nOK\n"
         self.assertTrue(gate.python_suite(subprocess.CompletedProcess([], 0, "", python)))
