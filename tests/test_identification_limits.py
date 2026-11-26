@@ -1,0 +1,165 @@
+import sys
+import unittest
+from itertools import combinations, product
+from pathlib import Path
+from random import Random
+
+STUDY = Path(__file__).resolve().parents[1] / "research" / "identification"
+sys.path.insert(0, str(STUDY))
+from lattice import gaps, measure
+from subset_oracle import oracle
+
+
+def direct_tree(matrix):
+    probes = range(len(matrix[0]))
+    best = 0
+    for root in probes:
+        outcomes = tuple(sorted({row[root] for row in matrix}))
+        for seconds in product([probe for probe in probes if probe != root], repeat=len(outcomes)):
+            policy = dict(zip(outcomes, seconds, strict=True))
+            paths = [(row[root], row[policy[row[root]]]) for row in matrix]
+            best = max(best, sum(paths.count(path) == 1 for path in paths))
+    return best
+
+
+class IdentificationLimits(unittest.TestCase):
+    def test_each_strict_bound_has_a_pure_counterexample(self):
+        controls = (
+            (["00", "00"], (0, 0, 0, 0, 0)),
+            (list(product("01", repeat=3)), (8, 0, 0, 0, 0)),
+            (["0000", "0001", "0010", "0111", "1011", "1111"], (6, 6, 3, 3, 3)),
+            (["1000", "0100", "0010", "0001"], (4, 4, 4, 2, 2)),
+            (["000", "010", "100", "101"], (4, 4, 4, 4, 2)),
+        )
+        for matrix, expected in controls:
+            with self.subTest(matrix=matrix):
+                self.assertEqual(tuple(measure(matrix).values()), expected)
+                self.assertEqual(tuple(oracle(matrix).values()), expected)
+
+    def test_all_three_solvers_agree_on_categorical_trees_and_relabelings(self):
+        rng = Random(9173)
+        for _ in range(1200):
+            n, k, alphabet = rng.randrange(2, 9), rng.randrange(2, 5), rng.randrange(2, 4)
+            matrix = [tuple(rng.randrange(alphabet) for _ in range(k)) for _ in range(n)]
+            expected = measure(matrix)
+            self.assertEqual(oracle(matrix), expected)
+            self.assertEqual(direct_tree(matrix), expected["A"])
+            columns = rng.sample(range(k), k)
+            relabeled = [(tuple(f"{probe}:{(row[probe]+1)%alphabet}" for probe in columns))
+                         for row in rng.sample(matrix, n)]
+            self.assertEqual(measure(relabeled), expected)
+            self.assertEqual(oracle(relabeled), expected)
+
+    def test_sealed_probe_gives_no_policy_credit_and_a_duplicate_changes_no_bound(self):
+        matrix = [f"000000{outcome}" for outcome in range(8)]
+        six, seven = measure([row[:6] for row in matrix]), measure(matrix)
+        self.assertEqual(sum(seven.values()), 40)
+        self.assertEqual(gaps(8, seven, six),
+                         dict(aliases=0, horizon=0, shared_root=0, shared_branch=0,
+                              sealed_probe=8, adaptivity=0))
+        table = ["000", "010", "100", "101"]
+        self.assertEqual(measure(table), measure([row + row[1] for row in table]))
+
+    def test_randomization_changes_uniform_one_hot_fairness_without_raising_coverage(self):
+        one_hot = ["1000", "0100", "0010", "0001"]
+        pairs = tuple(combinations(range(4), 2))
+        identified = [0] * 4
+        for pair in pairs:
+            outcomes = [tuple(row[probe] for probe in pair) for row in one_hot]
+            for index, outcome in enumerate(outcomes):
+                identified[index] += outcomes.count(outcome) == 1
+        self.assertEqual(identified, [len(pairs) // 2] * 4)
+        self.assertEqual(measure(one_hot)["A"], 2)
+
+
+class WiderObservations(unittest.TestCase):
+    def test_packed_faults_match_scalar_across_every_primitive(self):
+        from wider import packed
+        from iscas import parse
+
+        circuit = parse("""
+module toy (a,b,c,d,e,f,g,h,i);
+input a,b;
+output c,d,e,f,g,h,i;
+and U1 (c,a,b);
+nand U2 (d,a,b);
+or U3 (e,c,d);
+nor U4 (f,a,b);
+xor U5 (g,d,f);
+buf U6 (h,g);
+not U7 (i,h);
+endmodule
+""", "toy")
+        vectors = list(product((0, 1), repeat=2))
+        faults = tuple((node, index % 2) for index, node in enumerate(circuit.nodes))
+        actual = packed(circuit, vectors, faults)
+        separate = zip(*(circuit.simulate(vector, faults) for vector in vectors), strict=True)
+        self.assertEqual([tuple(row) for row in actual], list(separate))
+
+
+class IdentificationEvidence(unittest.TestCase):
+    def test_full_lattice_replays_the_sealed_report(self):
+        import json
+
+        from study import run, sealed
+
+        saved, _ = sealed(STUDY / "evidence", "study.json")
+        self.assertEqual(json.loads(json.dumps(run())), saved)
+
+    def test_wider_signatures_replay_the_locked_summaries(self):
+        import json
+
+        from study import ADAPTIVITY, sealed
+        from wider import summarize
+
+        wider, _ = sealed(STUDY / "evidence", "wider.json")
+        baseline, digest = sealed(ADAPTIVITY / "replication" / "evidence", "inputs.json")
+        self.assertEqual(wider["input_sha256"], digest)
+        self.assertEqual(json.loads(json.dumps(summarize(wider, baseline))), wider["summary"])
+        self.assertEqual(wider["summary"]["resolved_rows"], 400)
+        self.assertEqual(wider["summary"]["remaining_rows"], 258)
+
+
+class WideMenuPolicy(unittest.TestCase):
+    def test_tied_optimal_trees_disagree_on_newly_unique_rows(self):
+        from budgeted_wider import feasible_subsets, projected, reconcile
+
+        matrix = ["000000010", "100000000", "010000000", "000000001"]
+        actual, recovered = reconcile(matrix)
+        self.assertEqual(recovered, 2)
+        self.assertEqual(actual, (2, 2, 0, 2))
+        tagged = {0, 3}
+        self.assertEqual(projected(matrix, tagged), actual)
+        self.assertEqual(feasible_subsets(matrix, tagged), actual)
+        order = [2, 0, 3, 1]
+        probes = [3, 0, 5, 6, 2, 1, 4, 8, 7]
+        relabeled = [tuple(matrix[row][index] for index in probes) for row in order]
+        self.assertEqual(reconcile(relabeled), (actual, recovered))
+
+    def test_wide_menu_optima_replay_the_sealed_report(self):
+        import json
+
+        from budgeted_wider import run
+        from study import sealed
+
+        saved, _ = sealed(STUDY / "evidence", "budgeted_wider.json")
+        self.assertEqual(json.loads(json.dumps(run())), saved)
+
+
+class ActSignature(unittest.TestCase):
+    def test_delegated_signature_binds_acts_and_rejects_changed_manifest(self):
+        import hashlib
+        import subprocess
+
+        evidence = STUDY / "evidence"
+        manifest = (evidence / "ACTS.sha256").read_bytes()
+        command = ["ssh-keygen", "-Y", "verify", "-f", str(evidence / "allowed_signers"),
+                   "-I", "neuron7x", "-n", "neuron7x.research.v1", "-s",
+                   str(evidence / "ACTS.sha256.sig")]
+        for payload, expected in ((manifest, True), (manifest + b"\n", False)):
+            result = subprocess.run(command, input=payload, capture_output=True, timeout=10)
+            self.assertEqual(result.returncode == 0, expected)
+        for line in manifest.decode("ascii").splitlines():
+            expected, path = line.split("  ")
+            self.assertEqual(hashlib.sha256((STUDY / path).read_bytes()).hexdigest(),
+                             expected, path)
