@@ -4,16 +4,16 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
 from collections.abc import Callable
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,8 +21,10 @@ TIMEOUT = 120
 INJECTION_ENV = {
     "NODE_OPTIONS", "NODE_PATH", "NODE_TEST_CONTEXT", "NODE_V8_COVERAGE",
     "PYTHONPATH", "PYTHONHOME", "PYTHONOPTIMIZE",
+    "GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_NAMESPACE", "GIT_COMMON_DIR",
 }
 VERIFY_ENV = {key: value for key, value in os.environ.items() if key not in INJECTION_ENV}
+VERIFY_ENV["GIT_NO_REPLACE_OBJECTS"] = "1"
 
 
 class VerificationError(Exception):
@@ -36,24 +38,69 @@ def execute(command: list[str], directory: Path) -> subprocess.CompletedProcess[
     )
 
 
-def extract_commit(commit: str, destination: Path) -> None:
-    result = subprocess.run(
-        ["git", "archive", "--format=tar", commit], cwd=ROOT, capture_output=True,
+def git_bytes(*arguments: str) -> bytes:
+    return subprocess.run(
+        ["git", *arguments], cwd=ROOT, capture_output=True, env=VERIFY_ENV,
         timeout=TIMEOUT, check=True,
-    )
-    with tarfile.open(fileobj=io.BytesIO(result.stdout), mode="r:") as archive:
+    ).stdout
+
+
+def tree_index(commit: str) -> dict[str, tuple[str, str]]:
+    records = git_bytes("ls-tree", "-r", "-z", "--full-tree", commit).split(b"\0")
+    index = {}
+    for record in records[:-1]:
+        metadata, path = record.split(b"\t", 1)
+        mode, kind, oid = metadata.decode("ascii").split()
+        name = os.fsdecode(path)
+        if kind != "blob" or mode not in {"100644", "100755"}:
+            raise VerificationError(f"Unsupported Git tree entry: {name}")
+        if name in index or not re.fullmatch(r"[a-f0-9]{40}|[a-f0-9]{64}", oid):
+            raise VerificationError(f"Invalid Git tree entry: {name}")
+        index[name] = (mode, oid)
+    return index
+
+
+def extract_commit(commit: str, destination: Path) -> int:
+    index = tree_index(commit)
+    pending = dict(index)
+    paths = {str(p) for name in index for p in PurePosixPath(name).parents if str(p) != "."}
+    raw = git_bytes("archive", "--format=tar", commit)
+    with tarfile.open(fileobj=io.BytesIO(raw), mode="r:") as archive:
         for member in archive:
             target = destination / member.name
             if not target.resolve().is_relative_to(destination):
                 raise VerificationError(f"Archive path escapes destination: {member.name}")
-            if member.isdir():
+            if member.isdir() and member.name in paths:
                 target.mkdir(parents=True, exist_ok=True)
                 continue
-            if not member.isreg():
-                raise VerificationError(f"Archive contains a non-regular entry: {member.name}")
+            if not member.isreg() or member.name not in pending:
+                raise VerificationError(f"Unexpected or duplicate archive entry: {member.name}")
+            mode, oid = pending.pop(member.name)
+            executable = mode == "100755"
+            if bool(member.mode & 0o111) != executable:
+                raise VerificationError(f"Archive mode differs from Git tree: {member.name}")
+            algorithm = "sha1" if len(oid) == 40 else "sha256"
+            digest = hashlib.new(algorithm, usedforsecurity=False)
+            digest.update(f"blob {member.size}\0".encode("ascii"))
             target.parent.mkdir(parents=True, exist_ok=True)
             with archive.extractfile(member) as source, target.open("xb") as output:
-                shutil.copyfileobj(source, output)
+                while chunk := source.read(65536):
+                    digest.update(chunk)
+                    output.write(chunk)
+            if digest.hexdigest() != oid:
+                raise VerificationError(f"Archive bytes differ from Git tree: {member.name}")
+            target.chmod(0o755 if executable else 0o644)
+
+    if pending:
+        raise VerificationError("Archive omits Git tree paths: " + ", ".join(sorted(pending)))
+    return len(index)
+
+
+def require_committed_verifier(checkout: Path) -> str:
+    archived = checkout / "tools/verify_release.py"
+    if not archived.is_file() or archived.read_bytes() != Path(__file__).resolve().read_bytes():
+        raise VerificationError("Verifier differs from the selected Git revision")
+    return hashlib.sha256(archived.read_bytes()).hexdigest()
 
 
 def require(
@@ -191,7 +238,7 @@ def verify(root: Path) -> None:
         ))
 
     mutate(root, "inference/receipt.mjs",
-           lambda source: source.replace(b"replay.receipt_sha256 !== expectedDigest", b"false"),
+           lambda source: source.replace(b"receipt.receipt_sha256 !== expectedDigest", b"false"),
            reject_detached_anchor)
 
     forecast_test = "forecast scores agree with executable terminal outcomes and total action uses"
@@ -264,7 +311,10 @@ def main() -> int:
         print(f"TREE {tree.stdout.strip()}", flush=True)
         with tempfile.TemporaryDirectory(prefix="verify-release-") as temporary:
             checkout = Path(temporary).resolve()
-            extract_commit(commit, checkout)
+            count = extract_commit(commit, checkout)
+            print(f"TRACKED_BLOBS_VERIFIED {count}", flush=True)
+            verifier = require_committed_verifier(checkout)
+            print(f"VERIFIER_SHA256 {verifier}", flush=True)
             verify(checkout)
     except (VerificationError, OSError, subprocess.SubprocessError, tarfile.TarError) as error:
         print(f"VERIFY_RELEASE_FAILED: {error}", file=sys.stderr)
