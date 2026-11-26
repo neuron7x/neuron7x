@@ -296,6 +296,39 @@ def valid_sha(value: object) -> bool:
     return isinstance(value, str) and SHA.fullmatch(value) is not None
 
 
+TREE_ENTRY_TYPES = {
+    "040000": "tree",
+    "100644": "blob",
+    "100755": "blob",
+    "120000": "blob",
+    "160000": "commit",
+}
+
+
+def verified_tree_entries(entries: list, expected_sha: str) -> dict[str, dict]:
+    by_name = {}
+    encoded = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise ValueError("Invalid Git tree entry")
+        name, mode, kind, oid = (entry.get(key) for key in ("path", "mode", "type", "sha"))
+        if (not isinstance(name, str) or name in {"", ".", ".."} or "/" in name or "\0" in name
+                or name in by_name or not valid_sha(oid) or not isinstance(mode, str)
+                or mode not in TREE_ENTRY_TYPES or TREE_ENTRY_TYPES[mode] != kind):
+            raise ValueError("Invalid Git tree entry")
+        raw_name = name.encode("utf-8")
+        key = raw_name + (b"/" if kind == "tree" else b"")
+        content = mode.lstrip("0").encode("ascii") + b" " + raw_name + b"\0" + bytes.fromhex(oid)
+        encoded.append((key, content))
+        by_name[name] = entry
+
+    payload = b"".join(content for _, content in sorted(encoded))
+    header = f"tree {len(payload)}\0".encode("ascii")
+    if hashlib.sha1(header + payload, usedforsecurity=False).hexdigest() != expected_sha:
+        raise ValueError(f"Git tree bytes mismatch: {expected_sha}")
+    return by_name
+
+
 def verify_tree_paths(expected: dict[tuple[str, str, str], str]) -> None:
     roots: dict[tuple[str, str], str] = {}
     trees: dict[tuple[str, str], dict[str, dict]] = {}
@@ -317,14 +350,7 @@ def verify_tree_paths(expected: dict[tuple[str, str, str], str]) -> None:
                 entries = record.get("tree")
                 if record.get("sha") != sha or record.get("truncated") is not False or not isinstance(entries, list):
                     raise ValueError(f"Incomplete or mismatched Git tree: {repository} / {sha}")
-                by_name = {}
-                for entry in entries:
-                    name = entry.get("path") if isinstance(entry, dict) else None
-                    if (not isinstance(name, str) or name in {"", ".", ".."} or "/" in name
-                            or name in by_name or not valid_sha(entry.get("sha"))):
-                        raise ValueError(f"Invalid Git tree entry: {repository} / {sha}")
-                    by_name[name] = entry
-                trees[key] = by_name
+                trees[key] = verified_tree_entries(entries, sha)
 
             entry = trees[key].get(part, {})
             last = position == len(parts) - 1
