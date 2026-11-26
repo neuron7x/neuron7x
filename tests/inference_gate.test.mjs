@@ -249,6 +249,7 @@ test("CLI conformance exits nonzero when a reference trace differs", t => {
   for (const file of [
     "inference/kernel.mjs",
     "inference/two_step_policy.mjs",
+    "inference/receipt.mjs",
     "inference/cases",
     "inference/results",
     "research/atlas.json",

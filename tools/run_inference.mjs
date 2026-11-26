@@ -2,7 +2,8 @@
 /** Offline inference CLI. */
 import { resolve, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { EXACT_TWO_STEP, infer } from "../inference/kernel.mjs";
+import { EXACT_CLASS_TWO_STEP, EXACT_TWO_STEP, infer } from "../inference/kernel.mjs";
+import { advanceReceipt, createReceipt, verifyReceipt } from "../inference/receipt.mjs";
 import { readJson, readUtf8 } from "./read_json.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -36,18 +37,40 @@ function check(atlas) {
   return 0;
 }
 
+const input = path => readJson(resolve(path), CASE_BYTES);
+
+function print(result) {
+  process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+  return 0;
+}
+
 function main(argv) {
-  const checking = argv.length === 1 && argv[0] === "--check";
-  const exact = argv.length === 2 && argv[0] === "--exact-two-step" && !argv[1].startsWith("-");
-  const ordinary = argv.length === 1 && !argv[0].startsWith("-");
-  if (!checking && !exact && !ordinary) {
-    console.error("Usage: node tools/run_inference.mjs --check | [--exact-two-step] <local-case.json>");
+  const [flag, ...paths] = argv;
+  const arities = new Map([
+    ["--check", 0], ["--exact-two-step", 1], ["--exact-class-two-step", 1],
+    ["--receipt", 1], ["--receipt-class", 1], ["--verify-receipt", 2], ["--advance-receipt", 3],
+  ]);
+  const ordinary = argv.length === 1 && !flag.startsWith("-");
+  if (!ordinary && (arities.get(flag) !== paths.length || paths.some(path => path.startsWith("-")))) {
+    console.error("Usage: node tools/run_inference.mjs --check | [--exact-two-step|--exact-class-two-step|--receipt|--receipt-class] <case.json> | --verify-receipt <case.json> <receipt.json> | --advance-receipt <prior-case.json> <receipt.json> <new-case.json>");
     return 2;
   }
+
   const atlas = readJson(join(root, "research/atlas.json"), ATLAS_BYTES);
-  if (checking) return check(atlas);
-  process.stdout.write(run(resolve(exact ? argv[1] : argv[0]), atlas, exact ? EXACT_TWO_STEP : "pairwise"));
-  return 0;
+  if (ordinary) return print(infer(input(flag), atlas));
+  if (flag === "--check") return check(atlas);
+  if (flag === "--verify-receipt") {
+    verifyReceipt(input(paths[0]), atlas, input(paths[1]));
+    return print({ status: "RECEIPT_VERIFIED" });
+  }
+  if (flag === "--advance-receipt") {
+    return print(advanceReceipt(input(paths[0]), input(paths[2]), atlas, input(paths[1])));
+  }
+  const policy = flag === "--exact-class-two-step" || flag === "--receipt-class"
+    ? EXACT_CLASS_TWO_STEP : EXACT_TWO_STEP;
+  const caseData = input(paths[0]);
+  if (flag === "--receipt" || flag === "--receipt-class") return print(createReceipt(caseData, atlas, policy));
+  return print(infer(caseData, atlas, policy));
 }
 
 try {

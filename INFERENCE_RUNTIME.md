@@ -8,6 +8,7 @@ Input defines a finite set of deterministic models, one passive observation chan
 
 - **ABSTAIN:** insufficient discrimination, synchronized mimickers, exhausted budget, or incorrect source reference.
 - **CONDITIONAL_MODEL_SELECTION:** one survivor with a recorded intervention distinguishing it from the declared alternatives; **not proof of cause**.
+- **CONDITIONAL_BEHAVIOR_CLASS_SELECTION:** one surviving equivalence class with a recorded discriminating intervention. The result lists every viable model ID in that class.
 - **MODEL_CLASS_REFUTED:** none of the declared candidates fits; this says nothing about unmodelled causes.
 - **INVALID_INPUT:** a failed contract throws and must not authorize action.
 
@@ -27,11 +28,27 @@ A pinned case includes `intervention_plan.horizon`, `selected_models` and `inter
 
 The [categorical example](./inference/cases/adaptive_categorical.json) has five models. Pair-count greedy selects three within two steps. The exact policy chooses A, then B for outcome 0 or C for outcome 1, and conditionally selects all five.
 
+## Behavior classes and verified replay
+
+Use `--exact-class-two-step` to give one vote to each distinct complete prediction vector, including the passive column. Predictions that agree on every declared experiment belong to the same class. Adding an alias to a class preserves the intervention policy within the case-size limit. The result reports `behavior_classes.declared`, `behavior_classes.surviving`, and `intervention_plan.selected_classes`. Equivalent IDs remain visible in `survivors`. The class verdict identifies their common declared behavior within the experiment set.
+
+A receipt binds the declarations, ordered observation list, atlas, policy, forecast, verdict and evidence to SHA-256. Canonical inputs use UTF-8 JSON with sorted object keys and array order preserved. The evidence lists a record index and conflicting prediction for each excluded model. A selection includes the index of a recorded discriminating intervention. The forecast lists the next action for each modeled answer to the first intervention. An unmodeled answer may refute the class.
+
+`--advance-receipt` verifies the previous receipt, requires exactly one appended observation for the prescribed action and keeps the original horizon. An independent `--receipt` call starts a new forecast and may select a different intervention from the committed continuation. Keep the original receipt or its digest separately if you need to detect replacement of the entire case and receipt together. Verification replays the supplied evidence and assumes that the caller has authenticated the records and atlas.
+
+```sh
+node tools/run_inference.mjs --receipt inference/cases/adaptive_categorical.json > receipt.json
+node tools/run_inference.mjs --verify-receipt inference/cases/adaptive_categorical.json receipt.json
+node tools/run_inference.mjs --advance-receipt prior-case.json receipt.json next-case.json > next-receipt.json
+```
+
+The first two commands use the same case. For the third, `prior-case.json` is the case underlying the receipt and `next-case.json` appends its recommended intervention and observed outcome. Use `--receipt-class` to start a class-based receipt.
+
 ## Input and replay
 
 The CLI accepts regular UTF-8 JSON files up to 64 KiB per case and 1 MiB for the local atlas. Duplicate decoded object keys are invalid. The atlas binds each project ID to one string commit SHA. `--check` compares the five baseline traces and the exact categorical trace byte-for-byte.
 
-A case declares a time-invariant prediction for each model and intervention. Record order carries no information. Replaying a plan requires the same declarations and an updated list of observations within budget. If an intervention can change the response to a later intervention, define a different model and experiment protocol for that history-dependent process.
+A case declares a time-invariant prediction for each model and intervention. The inference verdict treats records as a set. The receipt preserves their append order for audit. Cases that explicitly declare history dependence fail the v1 schema. Processes where earlier interventions change later responses require a separate prediction contract.
 
 ## Run offline — no Actions, npm, cloud or tokens
 

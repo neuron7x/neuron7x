@@ -1,6 +1,7 @@
 /** NEURON7X Conditional Inference Gate v1 — finite-model discrimination, not causal proof. */
 import { EXACT_TWO_STEP, planTwoStep } from "./two_step_policy.mjs";
 export { EXACT_TWO_STEP };
+export const EXACT_CLASS_TWO_STEP = "exact-class-two-step";
 
 export const PROTOCOL = "neuron7x.conditional-inference.v1";
 export const DEBT = Object.freeze(["candidate_class_completeness","intervention_fidelity","outcome_provenance","unmodelled_exogenous_mimickers"]);
@@ -58,10 +59,20 @@ function pinnedProjects(atlas) {
   }
   return pins;
 }
+function behaviorRepresentatives(models, experiments) {
+  const signatures = new Map();
+  for (const model of models) {
+    const key = JSON.stringify(experiments.map(id => model.predictions[id]));
+    if (!signatures.has(key)) signatures.set(key, model);
+  }
+  return [...signatures.values()];
+}
+
 export function infer(x,atlas,policy="pairwise") {
   validate(x);
-  if(policy!=="pairwise"&&policy!==EXACT_TWO_STEP)throw Error("INVALID_INTERVENTION_POLICY");
-  const exactPlanning=policy===EXACT_TWO_STEP;
+  const classPlanning=policy===EXACT_CLASS_TWO_STEP;
+  if(policy!=="pairwise"&&policy!==EXACT_TWO_STEP&&!classPlanning)throw Error("INVALID_INTERVENTION_POLICY");
+  const exactPlanning=policy===EXACT_TWO_STEP||classPlanning;
   const pinned=pinnedProjects(atlas).get(x.source.project)===x.source.commit;
   const base={protocol:PROTOCOL,case_id:x.case_id,basis:x.basis,
     source_status:pinned?"PINNED_REFERENCE_ONLY":"SOURCE_MISMATCH",
@@ -78,12 +89,21 @@ export function infer(x,atlas,policy="pairwise") {
   const informative=new Set(tests.filter(id=>ms.some(model=>model.predictions[id]!==ms[0].predictions[id])));
   const witness=used.some(id=>informative.has(id));
   const remaining=x.budget-used.length;
+  let candidates=keep;
+  if(classPlanning){
+    const columns=x.experiments.map(e=>e.id).sort();
+    const declared=behaviorRepresentatives(ms,columns);
+    candidates=declared.filter(model=>keep.includes(model));
+    base.behavior_classes={declared:declared.length,surviving:candidates.length};
+  }
   let next=null;
   if(exactPlanning){
     const horizon=Math.min(2,remaining,available.length);
-    const plan=planTwoStep(keep,available,informative,horizon,witness);
+    const plan=planTwoStep(candidates,available,informative,horizon,witness);
     next=plan.next;
-    base.intervention_plan={horizon,selected_models:plan.selections,intervention_uses:plan.uses};
+    base.intervention_plan=classPlanning
+      ? {horizon,selected_classes:plan.selections,intervention_uses:plan.uses}
+      : {horizon,selected_models:plan.selections,intervention_uses:plan.uses};
   }else if(remaining>0){
     let score=0;
     for(const id of available){
@@ -95,8 +115,11 @@ export function infer(x,atlas,policy="pairwise") {
   }
   let verdict="ABSTAIN",reason="INSUFFICIENT_DISCRIMINATION";
   if(keep.length===0){verdict="MODEL_CLASS_REFUTED";reason="NO_DECLARED_MODEL_EXPLAINS_RECORD";}
-  else if(keep.length===1){
-    if(witness){verdict="CONDITIONAL_MODEL_SELECTION";reason="DECLARED_INTERVENTION_DISCRIMINATED_CANDIDATES";}
+  else if(candidates.length===1){
+    if(witness){
+      verdict=classPlanning?"CONDITIONAL_BEHAVIOR_CLASS_SELECTION":"CONDITIONAL_MODEL_SELECTION";
+      reason="DECLARED_INTERVENTION_DISCRIMINATED_CANDIDATES";
+    }
     else reason="NO_DISCRIMINATING_INTERVENTION_OBSERVED";
   }else if(next===null){
     if(remaining===0)reason="BUDGET_EXHAUSTED_OR_NO_DISTINGUISHING_TEST";
