@@ -118,19 +118,46 @@ function greedyCounts(candidates, remaining, budget) {
   };
 }
 
+// Column pairs yield a 2×2 contingency table of joint responses.
+function twoStepRootValues(models, first) {
+  const best = [0, 0];
+  let fixed = 0;
+  for (const second of interventions) {
+    if (second === first) continue;
+    const counts = [[0, 0], [0, 0]];
+    for (const model of models) {
+      const firstBit = Number(model.predictions[first]);
+      const secondBit = Number(model.predictions[second]);
+      counts[firstBit][secondBit]++;
+    }
+    const [zero, one] = counts.map(branch => branch.filter(count => count === 1).length);
+    best[0] = Math.max(best[0], zero);
+    best[1] = Math.max(best[1], one);
+    fixed = Math.max(fixed, zero + one);
+  }
+  return { adaptive: best[0] + best[1], fixed };
+}
+
 test("exhaustive six-model census separates forced deficits from tie effects", t => {
   const rows = Array.from({ length: 16 }, (_, value) => value.toString(2).padStart(4, "0"));
   const gaps = {};
   let forced = 0;
   let tieSensitive = 0;
   let alwaysOptimal = 0;
+  let terminalLoss = 0;
+  let rootLoss = 0;
+  let balancedRootLoss = 0;
+  let adaptiveGain = 0;
   for (const table of combinations(rows, 6)) {
     const models = makeModels(table);
     const oracle = optimalCount(models, interventions, 2);
     const { min, max, lex } = greedyCounts(models, interventions, 2);
     let selected = 0;
+    let first;
     for (const target of models) {
-      const { result } = greedyReplay(models, target);
+      const { result, queries } = greedyReplay(models, target);
+      first ??= queries[0];
+      assert.equal(queries[0], first);
       if (result.verdict === "CONDITIONAL_MODEL_SELECTION") {
         assert.deepEqual(result.survivors, [target.id]);
         selected++;
@@ -141,13 +168,25 @@ test("exhaustive six-model census separates forced deficits from tie effects", t
     }
     assert.equal(selected, lex, table.join(","));
     assert.ok(min <= lex && lex <= max && max <= oracle, table.join(","));
+    const rootValues = interventions.map(id => twoStepRootValues(models, id));
+    assert.equal(Math.max(...rootValues.map(value => value.adaptive)), oracle, table.join(","));
+    const corrected = rootValues[interventions.indexOf(first)].adaptive;
+    assert.ok(selected <= corrected && corrected <= oracle, table.join(","));
+    if (corrected > selected) terminalLoss++;
+    if (oracle > corrected) {
+      rootLoss++;
+      if (models.filter(model => model.predictions[first] === "0").length === 3) balancedRootLoss++;
+    }
+    if (oracle > Math.max(...rootValues.map(value => value.fixed))) adaptiveGain++;
     const deficit = oracle - selected;
     gaps[deficit] = (gaps[deficit] ?? 0) + 1;
     if (max < oracle) forced++;
     else if (min < oracle) tieSensitive++;
     else alwaysOptimal++;
   }
-  const census = { gaps, forced, tieSensitive, alwaysOptimal };
+  const census = {
+    gaps, forced, tieSensitive, alwaysOptimal, terminalLoss, rootLoss, balancedRootLoss, adaptiveGain,
+  };
   t.diagnostic(JSON.stringify(census));
   assert.equal(forced + tieSensitive + alwaysOptimal, 8008);
   assert.deepEqual(census, {
@@ -155,5 +194,9 @@ test("exhaustive six-model census separates forced deficits from tie effects", t
     forced: 5904,
     tieSensitive: 384,
     alwaysOptimal: 1720,
+    terminalLoss: 640,
+    rootLoss: 5536,
+    balancedRootLoss: 5472,
+    adaptiveGain: 2688,
   });
 });
