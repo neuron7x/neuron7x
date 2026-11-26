@@ -112,7 +112,9 @@ class ReleaseArchiveTest(unittest.TestCase):
                 "# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1.2\n")
         self.assertTrue(gate.node_suite(subprocess.CompletedProcess([], 0, full, "")))
         for text in ["# tests 1\n# pass 1\n", full.replace("# fail 0", "# fail 1"),
-                     full.replace("# skipped 0", "# skipped 1"), full.replace("ok 1", "ok 2")]:
+                     full.replace("# skipped 0", "# skipped 1"), full.replace("ok 1", "ok 2"),
+                     full.replace("ok 1", "not ok 1 - hidden failure\nok 1"),
+                     full.replace("1..1", "1.." + "9" * 4400)]:
             self.assertFalse(gate.node_suite(subprocess.CompletedProcess([], 0, text, "")))
         python = "-" * 70 + "\nRan 1 test in 0.001s\n\nOK\n"
         self.assertTrue(gate.python_suite(subprocess.CompletedProcess([], 0, "", python)))

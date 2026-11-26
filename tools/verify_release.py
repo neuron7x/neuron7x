@@ -139,8 +139,11 @@ def node_suite(result: subprocess.CompletedProcess[str]) -> bool:
         return False
     if len(re.findall(r"^# tests ", output, re.MULTILINE)) != 1:
         return False
-    top = re.findall(r"^ok ([1-9]\d*) - ", output[:summary.start()], re.MULTILINE)
-    return len(top) == int(summary[1]) and all(int(number) == index for index, number in enumerate(top, 1))
+    body = output[:summary.start()]
+    if re.search(r"^[ \t]*not ok\b", body, re.MULTILINE):
+        return False
+    top = re.findall(r"^ok ([1-9]\d*) - ", body, re.MULTILINE)
+    return str(len(top)) == summary[1] and all(number == str(index) for index, number in enumerate(top, 1))
 
 
 def python_suite(result: subprocess.CompletedProcess[str]) -> bool:
