@@ -105,14 +105,13 @@ def read_commit_tree(repository: str, commit: str) -> str:
 
 def verify_pins(data: dict, report: dict) -> None:
     require_owner()
-    pins = {
-        (p["repository"], p["commit"]): read_commit_tree(p["repository"], p["commit"])
-        for p in data["projects"]
-    }
-    report["raw_commits_verified"] = [
-        {"repository": repo, "commit": commit, "tree": tree}
-        for (repo, commit), tree in sorted(pins.items())
-    ]
+    pins = {}
+    report["raw_commits_verified"] = []
+    revisions = {(p["repository"], p["commit"]) for p in data["projects"]}
+    for repo, commit in sorted(revisions):
+        tree = read_commit_tree(repo, commit)
+        pins[repo, commit] = tree
+        report["raw_commits_verified"].append({"repository": repo, "commit": commit, "tree": tree})
 
     def fetch(repository: str, route: str) -> dict:
         checked_repository(repository)
@@ -135,7 +134,10 @@ def verify_pins(data: dict, report: dict) -> None:
 def verify_revision(ref: str, report: dict) -> None:
     raw = release.git_bytes("rev-parse", "--verify", "--end-of-options", f"{ref}^{{commit}}")
     commit = raw.decode("ascii").strip()
+    if not atlas.valid_sha(commit):
+        raise SourceError("Expected a SHA-1 repository revision")
     report["commit"] = commit
+    report["tree"] = release.git_bytes("rev-parse", "--verify", f"{commit}^{{tree}}").decode("ascii").strip()
     with tempfile.TemporaryDirectory(prefix="verify-sources-tree-") as directory:
         checkout = Path(directory)
         release.extract_commit(commit, checkout)
@@ -153,7 +155,7 @@ def main() -> int:
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
     report = {
-        "schema": "neuron7x.source-verification.v1", "status": "FAIL", "commit": None,
+        "schema": "neuron7x.source-verification.v1", "status": "FAIL", "commit": None, "tree": None,
         "atlas_sha256": None, "raw_commits_verified": [], "source_requests": 0, "blobs_verified": 0,
     }
     try:
