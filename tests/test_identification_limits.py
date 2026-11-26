@@ -118,3 +118,20 @@ class IdentificationEvidence(unittest.TestCase):
         self.assertEqual(json.loads(json.dumps(summarize(wider, baseline))), wider["summary"])
         self.assertEqual(wider["summary"]["resolved_rows"], 400)
         self.assertEqual(wider["summary"]["remaining_rows"], 258)
+
+
+class WideMenuPolicy(unittest.TestCase):
+    def test_tied_optimal_trees_disagree_on_newly_unique_rows(self):
+        from budgeted_wider import feasible_subsets, projected, reconcile
+
+        matrix = ["000000010", "100000000", "010000000", "000000001"]
+        actual, recovered = reconcile(matrix)
+        self.assertEqual(recovered, 2)
+        self.assertEqual(actual, (2, 2, 0, 2))
+        tagged = {0, 3}
+        self.assertEqual(projected(matrix, tagged), actual)
+        self.assertEqual(feasible_subsets(matrix, tagged), actual)
+        order = [2, 0, 3, 1]
+        probes = [3, 0, 5, 6, 2, 1, 4, 8, 7]
+        relabeled = [tuple(matrix[row][index] for index in probes) for row in order]
+        self.assertEqual(reconcile(relabeled), (actual, recovered))
