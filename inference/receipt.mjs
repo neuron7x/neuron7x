@@ -99,41 +99,51 @@ function forecast(input, atlas, policy, initial) {
   return { first: next, branches };
 }
 
-// Score the returned plan from raw predictions and records, without calling infer.
+// Enumerate bounded trees from full hypothetical histories, independent of infer.
+function referencePlan(input, policy, observations, active, available, horizon) {
+  const viable = input.models.filter(model => observations.every(obs =>
+    model.predictions[obs.experiment] === obs.outcome));
+  const candidates = targets(input, viable, policy);
+  const witness = observations.some(obs => active.has(obs.experiment)
+    && input.models.some(model => model.predictions[obs.experiment] !== obs.outcome));
+  let best = {
+    first: null, branches: [], selections: Number(candidates.length === 1 && witness), uses: 0,
+  };
+  if (horizon === 0 || candidates.length === 0 || best.selections > 0) return best;
+
+  for (const action of available) {
+    const outcomes = [...new Set(candidates.map(model => model.predictions[action]))].sort();
+    const unused = available.filter(other => other !== action);
+    const path = { first: action, branches: [], selections: 0, uses: candidates.length };
+    for (const outcome of outcomes) {
+      const next = referencePlan(input, policy, [...observations, { experiment: action, outcome }],
+                                 active, unused, horizon - 1);
+      path.selections += next.selections;
+      path.uses += next.uses;
+      if (horizon > 1) path.branches.push({ outcome, next: next.first });
+    }
+    if (path.selections > best.selections || (path.selections === best.selections && path.uses < best.uses)) {
+      best = path;
+    }
+  }
+  return best;
+}
+
 function verifyForecast(input, policy, result, plan, budget = input.budget) {
   const active = new Set(input.experiments.filter(entry => entry.kind === "intervention").map(entry => entry.id));
-  const alreadyUsed = new Set(input.observations.map(obs => obs.experiment));
-  const available = [...active].filter(action => !alreadyUsed.has(action)).length;
-  const horizon = Math.min(2, budget - input.observations.length, available);
+  const used = new Set(input.observations.map(obs => obs.experiment));
+  const available = [...active].filter(action => !used.has(action)).sort();
+  const horizon = Math.min(2, budget - input.observations.length, available.length);
   if (result.intervention_plan.horizon !== horizon) throw Error("INVALID_INFERENCE_FORECAST");
-  const fits = (model, records) => records.every(obs => model.predictions[obs.experiment] === obs.outcome);
-  const viable = input.models.filter(model => fits(model, input.observations));
-  let selected = 0;
-  let uses = 0;
-  for (const model of targets(input, viable, policy)) {
-    const records = [...input.observations];
-    function record(action) {
-      if (!active.has(action) || alreadyUsed.has(action) || records.some(obs => obs.experiment === action)
-        || records.length - input.observations.length >= result.intervention_plan.horizon) {
-        throw Error("INVALID_INFERENCE_FORECAST");
-      }
-      records.push({ experiment: action, outcome: model.predictions[action] });
-      uses++;
-    }
-    if (plan.first !== null) {
-      record(plan.first);
-      const second = plan.branches.find(branch => branch.outcome === model.predictions[plan.first])?.next;
-      if (second != null) record(second);
-    }
-    const survivors = input.models.filter(candidate => fits(candidate, records));
-    const witness = records.some(obs => active.has(obs.experiment)
-      && input.models.some(candidate => candidate.predictions[obs.experiment] !== obs.outcome));
-    if (witness && targets(input, survivors, policy).length === 1) selected++;
+
+  const best = referencePlan(input, policy, input.observations, active, available, horizon);
+  if (plan.first !== best.first || canonical(plan.branches) !== canonical(best.branches)) {
+    throw Error("SUBOPTIMAL_INFERENCE_FORECAST");
   }
   const advertised = policy === EXACT_CLASS_TWO_STEP
     ? result.intervention_plan.selected_classes
     : result.intervention_plan.selected_models;
-  if (advertised !== selected || result.intervention_plan.intervention_uses !== uses) {
+  if (advertised !== best.selections || result.intervention_plan.intervention_uses !== best.uses) {
     throw Error("INVALID_INFERENCE_FORECAST");
   }
 }

@@ -248,3 +248,45 @@ test("forecast scores agree with executable terminal outcomes and total action u
     assert.equal(terminal.result.intervention_plan.selected_models ?? terminal.result.intervention_plan.selected_classes, 1);
   }
 });
+
+function receiptCase(rows) {
+  const input = fixture("adaptive_categorical");
+  const columns = ["A", "B", "C"].slice(0, rows[0].length);
+  input.experiments = [input.experiments[0], ...columns.map(id => ({ id, kind: "intervention" }))];
+  input.models = rows.map((row, index) => ({
+    id: "M" + index,
+    predictions: { observe: "ZERO", ...Object.fromEntries(columns.map((id, i) => [id, row[i]])) },
+  }));
+  return input;
+}
+
+test("forecast optimality maximizes selections for both policies", () => {
+  const input = fixture("adaptive_categorical");
+  for (const policy of [EXACT_TWO_STEP, EXACT_CLASS_TWO_STEP]) {
+    const receipt = createReceipt(input, atlas, policy);
+    assert.equal(receipt.forecast.first, "A");
+    assert.equal(receipt.result.intervention_plan.selected_models ?? receipt.result.intervention_plan.selected_classes, 5);
+    assert.deepEqual(verifyReceipt(input, atlas, receipt), receipt);
+  }
+});
+
+test("forecast optimality minimizes costs and resolves root ties", () => {
+  const input = receiptCase(["000", "011", "122", "133"]);
+  for (const policy of [EXACT_TWO_STEP, EXACT_CLASS_TWO_STEP]) {
+    const receipt = createReceipt(input, atlas, policy);
+    assert.equal(receipt.forecast.first, "B");
+    assert.equal(receipt.result.intervention_plan.intervention_uses, 4);
+  }
+});
+
+test("forecast optimality checks lexical ties inside every branch", () => {
+  const input = fixture("adaptive_categorical");
+  input.experiments.push({ id: "D", kind: "intervention" });
+  for (const model of input.models) model.predictions.D = model.predictions.B;
+  for (const policy of [EXACT_TWO_STEP, EXACT_CLASS_TWO_STEP]) {
+    const receipt = createReceipt(input, atlas, policy);
+    assert.deepEqual(receipt.forecast, { first: "A", branches: [
+      { outcome: "0", next: "B" }, { outcome: "1", next: "C" },
+    ] });
+  }
+});

@@ -219,6 +219,33 @@ def verify(root: Path) -> None:
            lambda source: source.replace(b'{"100644", "100755"}', b'{"100644", "100755", "120000"}'),
            reject_symlink_admission)
 
+    planner_loop = b"for (const first of interventions) {"
+    forecast_controls = [
+        ("Receipt rejects a coherent coverage loss",
+         "forecast optimality maximizes selections for both policies",
+         planner_loop + b' if (horizon === 2 && models.length === 5 && first !== "C") continue;'),
+        ("Receipt rejects coherent excess action cost",
+         "forecast optimality minimizes costs and resolves root ties",
+         planner_loop + b' if (horizon === 2 && models.length === 4 && first !== "A") continue;'),
+        ("Receipt rejects a coherent wrong root tie",
+         "forecast optimality minimizes costs and resolves root ties",
+         planner_loop + b' if (horizon === 2 && models.length === 4 && first !== "C") continue;'),
+        ("Receipt rejects a coherent wrong branch tie",
+         "forecast optimality checks lexical ties inside every branch",
+         b"for (const first of (horizon === 1 ? [...interventions].reverse() : interventions)) {"),
+    ]
+
+    for name, test_name, altered_loop in forecast_controls:
+        def reject_suboptimal_forecast() -> None:
+            command = [*node, f"--test-name-pattern=^{test_name}$", "tests/inference_receipt.test.mjs"]
+            require(name, command, root, 1, lambda result: (
+                re.search(rf"^not ok [0-9]+ - {test_name}$", result.stdout, re.MULTILINE) is not None
+                and "SUBOPTIMAL_INFERENCE_FORECAST" in result.stdout
+            ))
+
+        mutate(root, "inference/two_step_policy.mjs",
+               lambda source: source.replace(planner_loop, altered_loop, 1), reject_suboptimal_forecast)
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
