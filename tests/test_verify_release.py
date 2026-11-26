@@ -1,4 +1,8 @@
+import contextlib
+import io
+import json
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -76,3 +80,29 @@ class ReleaseArchiveTest(unittest.TestCase):
         with patch.object(gate, "ROOT", self.repo):
             self.assertEqual(gate.extract_commit(original, self.archive), 1)
         self.assertEqual((self.archive / "proof.txt").read_text(), "first")
+
+    def test_machine_report_marks_unverified_commit_without_fake_coverage(self):
+        report = self.archive / "result.json"
+        with (
+            patch.object(gate, "ROOT", self.repo),
+            patch.object(sys, "argv", ["gate", "missing", "--report", str(report)]),
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            self.assertEqual(gate.main(), 1)
+        observed = json.loads(report.read_text())
+        self.assertEqual(observed["status"], "FAIL")
+        self.assertEqual(observed["failed_stage"], "resolve-commit")
+        self.assertIsNone(observed["commit"])
+        self.assertEqual(observed["checks"], [])
+        self.assertEqual(observed["negative_controls"], {"passed": 0, "failed": 0})
+
+    def test_attempted_negative_control_needs_its_diagnostic_to_pass(self):
+        records = []
+        outcome = subprocess.CompletedProcess([], 1, "wrong diagnostic", "")
+        with patch.object(gate, "execute", return_value=outcome), contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaises(gate.VerificationError):
+                gate.run_check(records, "control", ["example"], self.repo, 1,
+                               lambda result: result.stdout == "expected diagnostic")
+        self.assertEqual(records, [{"name": "control", "kind": "negative-control",
+                                    "expected_exit": 1, "actual_exit": 1, "status": "FAIL"}])
