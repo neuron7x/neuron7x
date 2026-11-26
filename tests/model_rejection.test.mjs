@@ -1,1 +1,40 @@
-aW1wb3J0IGFzc2VydCBmcm9tICJub2RlOmFzc2VydC9zdHJpY3QiOwppbXBvcnQgdGVzdCBmcm9tICJub2RlOnRlc3QiOwppbXBvcnQge3JlYWRGaWxlU3luY30gZnJvbSAibm9kZTpmcyI7CmltcG9ydCB7b2JzZXJ2ZSwgcnVufSBmcm9tICIuLi9yZXNlYXJjaC9tb2RlbF9yZWplY3Rpb24vc3R1ZHkubWpzIjsKCmNvbnN0IHNhdmVkID0gSlNPTi5wYXJzZShyZWFkRmlsZVN5bmMobmV3IFVSTCgiLi4vcmVzZWFyY2gvbW9kZWxfcmVqZWN0aW9uL3N1bW1hcnkuanNvbiIsIGltcG9ydC5tZXRhLnVybCkpKTsKCnRlc3QoIkEwNiBleGhhdXN0aXZlIHRyYWplY3RvcmllcyB2ZXJpZnkgdGhlIGZyb3plbiBvdXRjb21lIiwgKCkgPT4gewogIGNvbnN0IHtyZWNvcmRzLCAuLi5hY3R1YWx9ID0gcnVuKCk7CiAgYXNzZXJ0LmRlZXBFcXVhbChhY3R1YWwsIHNhdmVkKTsKICBhc3NlcnQuZXF1YWwocmVjb3Jkcy5sZW5ndGgsIDE4MjApOwogIGZvciAoY29uc3Qge2NhdGFsb2csIGJhc2VUcmVlLCBndWFyZFRyZWUsIGJhc2UsIGd1YXJkfSBvZiByZWNvcmRzKSB7CiAgICBhc3NlcnQuZXF1YWwoYmFzZS5jb3JyZWN0LCBndWFyZC5jb3JyZWN0KTsKICAgIGZvciAoY29uc3QgW3RyZWUsIHNjb3JlXSBvZiBbW2Jhc2VUcmVlLCBiYXNlXSwgW2d1YXJkVHJlZSwgZ3VhcmRdXSkgewogICAgICAvLyBBbiBpZGVudGlmaWVkIHJvdydzIGxlYWYgaGFzIDJeKDQtZGVwdGgpIHBvc3NpYmxlIHNpZ25hdHVyZXMuCiAgICAgIGNvbnN0IHVuYXZvaWRhYmxlID0gY2F0YWxvZy5yZWR1Y2UoKHN1bSwgdHJ1dGgpID0+IHsKICAgICAgICBjb25zdCByZXN1bHQgPSBvYnNlcnZlKGNhdGFsb2csIHRyZWUsIHRydXRoKTsKICAgICAgICByZXR1cm4gc3VtICsgKHJlc3VsdC5sYWJlbCA9PT0gdHJ1dGggPyAoMiAqKiAoNCAtIHJlc3VsdC5wcm9iZXMpIC0gMSkgOiAwKTsKICAgICAgfSwgMCk7CiAgICAgIGFzc2VydC5lcXVhbChzY29yZS5mYWxzZSwgdW5hdm9pZGFibGUpOwogICAgfQogICAgYXNzZXJ0LmVxdWFsKGd1YXJkLmZhbHNlLCAzICogZ3VhcmQuY29ycmVjdCk7CiAgfQp9KTsKCnRlc3QoImEgc2Vjb25kIHByb2JlIGNhbiByZWZ1dGUgYW4gaW5pdGlhbCBzaW5nbGV0b24iLCAoKSA9PiB7CiAgY29uc3QgY2F0YWxvZyA9IFswLCAxLCAzLCA1XTsKICBhc3NlcnQuZGVlcEVxdWFsKG9ic2VydmUoY2F0YWxvZywgWzAsLTEsLTFdLCAyKSwge2xhYmVsOjAsIHByb2JlczoxfSk7CiAgYXNzZXJ0LmRlZXBFcXVhbChvYnNlcnZlKGNhdGFsb2csIFswLDEsLTFdLCAyKSwge2xhYmVsOiJyZWZ1dGUiLCBwcm9iZXM6Mn0pOwogIGFzc2VydC5kZWVwRXF1YWwob2JzZXJ2ZShjYXRhbG9nLCBbMCwxLC0xXSwgMCksIHtsYWJlbDowLCBwcm9iZXM6Mn0pOwp9KTsKCnRlc3QoImEgZGlmZmVyZW50bHkgbmFtZWQgbWVjaGFuaXNtIHdpdGggdGhlIHNhbWUgc2lnbmF0dXJlIHNoYXJlcyB0aGUgdGVybWluYWwgbGFiZWwiLCAoKSA9PiB7CiAgY29uc3Qga25vd24gPSB7bW9kZWw6ImRlY2xhcmVkIiwgc2lnbmF0dXJlOjB9OwogIGNvbnN0IGhpZGRlbiA9IHttb2RlbDoidW5zZWVuIG1lY2hhbmlzbSIsIHNpZ25hdHVyZTowfTsKICBjb25zdCBjYXRhbG9nID0gWzAsIDEsIDMsIDVdOwogIGFzc2VydC5ub3RFcXVhbChrbm93bi5tb2RlbCwgaGlkZGVuLm1vZGVsKTsKICBhc3NlcnQuZGVlcEVxdWFsKG9ic2VydmUoY2F0YWxvZywgWzAsMSwtMV0sIGtub3duLnNpZ25hdHVyZSksCiAgICBvYnNlcnZlKGNhdGFsb2csIFswLDEsLTFdLCBoaWRkZW4uc2lnbmF0dXJlKSk7Cn0pOwo=
+import assert from "node:assert/strict";
+import test from "node:test";
+import {readFileSync} from "node:fs";
+import {observe, run} from "../research/model_rejection/study.mjs";
+
+const saved = JSON.parse(readFileSync(new URL("../research/model_rejection/summary.json", import.meta.url)));
+
+test("A06 exhaustive trajectories verify the frozen outcome", () => {
+  const {records, ...actual} = run();
+  assert.deepEqual(actual, saved);
+  assert.equal(records.length, 1820);
+  for (const {catalog, baseTree, guardTree, base, guard} of records) {
+    assert.equal(base.correct, guard.correct);
+    for (const [tree, score] of [[baseTree, base], [guardTree, guard]]) {
+      // An identified row's leaf has 2^(4-depth) possible signatures.
+      const unavoidable = catalog.reduce((sum, truth) => {
+        const result = observe(catalog, tree, truth);
+        return sum + (result.label === truth ? (2 ** (4 - result.probes) - 1) : 0);
+      }, 0);
+      assert.equal(score.false, unavoidable);
+    }
+    assert.equal(guard.false, 3 * guard.correct);
+  }
+});
+
+test("a second probe can refute an initial singleton", () => {
+  const catalog = [0, 1, 3, 5];
+  assert.deepEqual(observe(catalog, [0,-1,-1], 2), {label:0, probes:1});
+  assert.deepEqual(observe(catalog, [0,1,-1], 2), {label:"refute", probes:2});
+  assert.deepEqual(observe(catalog, [0,1,-1], 0), {label:0, probes:2});
+});
+
+test("a differently named mechanism with the same signature shares the terminal label", () => {
+  const known = {model:"declared", signature:0};
+  const hidden = {model:"unseen mechanism", signature:0};
+  const catalog = [0, 1, 3, 5];
+  assert.notEqual(known.model, hidden.model);
+  assert.deepEqual(observe(catalog, [0,1,-1], known.signature),
+    observe(catalog, [0,1,-1], hidden.signature));
+});

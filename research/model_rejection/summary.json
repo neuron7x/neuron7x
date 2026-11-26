@@ -1,1 +1,27 @@
-ewogICJzY2hlbWEiOiAiYTA2LmNhdGFsb2ctcmVqZWN0aW9uLnYxIiwKICAicHJvdG9jb2wiOiAiMzE2N2M5ZTBhMmQzN2RmMTQ5OTg5NGYyNTgxNmM3YjBiNjdhZDQwZSIsCiAgImNhdGFsb2dzIjogMTgyMCwKICAidHJlZXMiOiA2NSwKICAidHJlZUNoZWNrcyI6IDExODMwMCwKICAiaW5zaWRlIjogNzI4MCwKICAib3V0c2lkZSI6IDIxODQwLAogICJpbXByb3ZlZENhdGFsb2dzIjogMTc2LAogICJiYXNlbGluZSI6IHsKICAgICJjb3JyZWN0IjogNjkyOCwKICAgICJmYWxzZSI6IDIxNDg4LAogICAgInJlamVjdGVkIjogMCwKICAgICJpbnNpZGVVc2VzIjogMTQzODQsCiAgICAib3V0c2lkZVVzZXMiOiA0MjQ0OAogIH0sCiAgImd1YXJkZWQiOiB7CiAgICAiY29ycmVjdCI6IDY5MjgsCiAgICAiZmFsc2UiOiAyMDc4NCwKICAgICJyZWplY3RlZCI6IDcwNCwKICAgICJpbnNpZGVVc2VzIjogMTQ1NjAsCiAgICAib3V0c2lkZVVzZXMiOiA0MzY4MAogIH0sCiAgInJlZHVjZWRGYWxzZSI6IDcwNCwKICAiZXh0cmFJbnNpZGVVc2VzIjogMTc2LAogICJkZWNpc2lvbiI6ICJSRUZVVEVEIgp9Cg==
+{
+  "schema": "a06.catalog-rejection.v1",
+  "protocol": "3167c9e0a2d37df1499894f25816c7b0b67ad40e",
+  "catalogs": 1820,
+  "trees": 65,
+  "treeChecks": 118300,
+  "inside": 7280,
+  "outside": 21840,
+  "improvedCatalogs": 176,
+  "baseline": {
+    "correct": 6928,
+    "false": 21488,
+    "rejected": 0,
+    "insideUses": 14384,
+    "outsideUses": 42448
+  },
+  "guarded": {
+    "correct": 6928,
+    "false": 20784,
+    "rejected": 704,
+    "insideUses": 14560,
+    "outsideUses": 43680
+  },
+  "reducedFalse": 704,
+  "extraInsideUses": 176,
+  "decision": "REFUTED"
+}

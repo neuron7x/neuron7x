@@ -1,1 +1,49 @@
-bmFtZTogQTA2IHJhdyBiZW5jaG1hcmsgZXZpZGVuY2UKb246CiAgcHVsbF9yZXF1ZXN0OgogICAgYnJhbmNoZXM6IFttYWluXQogICAgcGF0aHM6CiAgICAgIC0gJ3Jlc2VhcmNoL21vZGVsX3JlamVjdGlvbi8qKicKICAgICAgLSAndGVzdHMvbW9kZWxfcmVqZWN0aW9uLnRlc3QubWpzJwogICAgICAtICcuZ2l0aHViL3dvcmtmbG93cy9hMDYueW1sJwogIHB1c2g6CiAgICBicmFuY2hlczogW21haW5dCiAgICBwYXRoczoKICAgICAgLSAncmVzZWFyY2gvbW9kZWxfcmVqZWN0aW9uLyoqJwogICAgICAtICd0ZXN0cy9tb2RlbF9yZWplY3Rpb24udGVzdC5tanMnCiAgICAgIC0gJy5naXRodWIvd29ya2Zsb3dzL2EwNi55bWwnCgpwZXJtaXNzaW9uczoKICBjb250ZW50czogcmVhZAoKam9iczoKICBiZW5jaG1hcms6CiAgICBydW5zLW9uOiB1YnVudHUtMjQuMDQKICAgIHRpbWVvdXQtbWludXRlczogNQogICAgc3RlcHM6CiAgICAgIC0gdXNlczogYWN0aW9ucy9jaGVja291dEAzZDNjNDJlNWFhYzViYTgwNTgyNWRhNzY0MTBjMTgxMjczYmE5MGIxICMgdjcuMC4xCiAgICAgICAgd2l0aDoKICAgICAgICAgIHBlcnNpc3QtY3JlZGVudGlhbHM6IGZhbHNlCiAgICAgIC0gdXNlczogYWN0aW9ucy9zZXR1cC1ub2RlQDk0OWZlYjI0MTNkNjQ1ODc5NGRjZDI0OTFjNGJhYmJiY2UwYzE1YzEgIyB2Ny4xLjAKICAgICAgICB3aXRoOgogICAgICAgICAgbm9kZS12ZXJzaW9uOiAnMjIuMTYuMCcKICAgICAgICAgIHBhY2thZ2UtbWFuYWdlci1jYWNoZTogZmFsc2UKICAgICAgLSBuYW1lOiBSZXByb2R1Y2UgQTA2IGFuZCBwcmVzZXJ2ZSBhbGwgY2F0YWxvZyByZWNvcmRzCiAgICAgICAgc2hlbGw6IGJhc2gKICAgICAgICBydW46IHwKICAgICAgICAgIG5vZGUgLS10ZXN0IHRlc3RzL21vZGVsX3JlamVjdGlvbi50ZXN0Lm1qcwogICAgICAgICAgZ2VuZXJhdG9yPSdpbXBvcnQge3J1bn0gZnJvbSAiLi9yZXNlYXJjaC9tb2RlbF9yZWplY3Rpb24vc3R1ZHkubWpzIjsgY29uc29sZS5sb2coSlNPTi5zdHJpbmdpZnkocnVuKCkpKScKICAgICAgICAgIGRpcj0iJFJVTk5FUl9URU1QL2EwNiIKICAgICAgICAgIG1rZGlyICIkZGlyIgogICAgICAgICAgVFo9VVRDIG5vZGUgLS1pbnB1dC10eXBlPW1vZHVsZSAtZSAiJGdlbmVyYXRvciIgPiAiJGRpci9yZXN1bHRzLmpzb24iCiAgICAgICAgICBUWj1QYWNpZmljL0hvbm9sdWx1IG5vZGUgLS1pbnB1dC10eXBlPW1vZHVsZSAtZSAiJGdlbmVyYXRvciIgPiAiJGRpci9yZXBlYXQuanNvbiIKICAgICAgICAgIGNtcCAiJGRpci9yZXN1bHRzLmpzb24iICIkZGlyL3JlcGVhdC5qc29uIgogICAgICAgICAgcm0gIiRkaXIvcmVwZWF0Lmpzb24iCiAgICAgICAgICBnaXQgcmV2LXBhcnNlIEhFQUQgPiAiJGRpci9jb21taXQudHh0IgogICAgICAgICAgKGNkICIkZGlyIiAmJiBzaGEyNTZzdW0gcmVzdWx0cy5qc29uIGNvbW1pdC50eHQgPiBTSEEyNTZTVU1TKQogICAgICAtIHVzZXM6IGFjdGlvbnMvdXBsb2FkLWFydGlmYWN0QGNmNDMwZTAzMGRkYmI1YjBhYmY5M2QyMjk2MmY0NzUyZjM2NDZjZDkgIyB2Ny4wLjIKICAgICAgICB3aXRoOgogICAgICAgICAgbmFtZTogYTA2LWNhc2UtZXZpZGVuY2UKICAgICAgICAgIHBhdGg6ICR7eyBydW5uZXIudGVtcCB9fS9hMDYKICAgICAgICAgIGlmLW5vLWZpbGVzLWZvdW5kOiBlcnJvcgogICAgICAgICAgcmV0ZW50aW9uLWRheXM6IDMwCg==
+name: A06 raw benchmark evidence
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/model_rejection/**'
+      - 'tests/model_rejection.test.mjs'
+      - '.github/workflows/a06.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'research/model_rejection/**'
+      - 'tests/model_rejection.test.mjs'
+      - '.github/workflows/a06.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.16.0'
+          package-manager-cache: false
+      - name: Reproduce A06 and preserve all catalog records
+        shell: bash
+        run: |
+          node --test tests/model_rejection.test.mjs
+          generator='import {run} from "./research/model_rejection/study.mjs"; console.log(JSON.stringify(run()))'
+          dir="$RUNNER_TEMP/a06"
+          mkdir "$dir"
+          TZ=UTC node --input-type=module -e "$generator" > "$dir/results.json"
+          TZ=Pacific/Honolulu node --input-type=module -e "$generator" > "$dir/repeat.json"
+          cmp "$dir/results.json" "$dir/repeat.json"
+          rm "$dir/repeat.json"
+          git rev-parse HEAD > "$dir/commit.txt"
+          (cd "$dir" && sha256sum results.json commit.txt > SHA256SUMS)
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: a06-case-evidence
+          path: ${{ runner.temp }}/a06
+          if-no-files-found: error
+          retention-days: 30

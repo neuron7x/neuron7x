@@ -1,1 +1,128 @@
-Ly8gQTA2LiBTaWduZWQtb2ZmIHN0dWR5IHByb3RvY29sIGxpdmVzIGFsb25nc2lkZSB0aGlzIGltcGxlbWVudGF0aW9uLgpjb25zdCBUUlVUSFMgPSBBcnJheS5mcm9tKHtsZW5ndGg6IDE2fSwgKF8sIHNpZ25hdHVyZSkgPT4gc2lnbmF0dXJlKTsKY29uc3QgUFJPQkVTID0gWzAsIDEsIDIsIDNdOwpjb25zdCBTVE9QID0gLTE7CmNvbnN0IHJlYWQgPSAoc2lnbmF0dXJlLCBwcm9iZSkgPT4gc2lnbmF0dXJlID4+IHByb2JlICYgMTsKCmZ1bmN0aW9uKiB0cmVlcygpIHsKICB5aWVsZCBbU1RPUCwgU1RPUCwgU1RPUF07CiAgZm9yIChjb25zdCByb290IG9mIFBST0JFUykgewogICAgY29uc3Qgb3B0aW9ucyA9IFtTVE9QLCAuLi5QUk9CRVMuZmlsdGVyKHByb2JlID0+IHByb2JlICE9PSByb290KV07CiAgICBmb3IgKGNvbnN0IGxlZnQgb2Ygb3B0aW9ucykgZm9yIChjb25zdCByaWdodCBvZiBvcHRpb25zKSB5aWVsZCBbcm9vdCwgbGVmdCwgcmlnaHRdOwogIH0KfQoKZnVuY3Rpb24qIGNhdGFsb2dzKCkgewogIGZvciAobGV0IGEgPSAwOyBhIDwgMTM7IGErKykgZm9yIChsZXQgYiA9IGErMTsgYiA8IDE0OyBiKyspIHsKICAgIGZvciAobGV0IGMgPSBiKzE7IGMgPCAxNTsgYysrKSBmb3IgKGxldCBkID0gYysxOyBkIDwgMTY7IGQrKykgeWllbGQgW2EsYixjLGRdOwogIH0KfQoKZnVuY3Rpb24gcGF0aChzaWduYXR1cmUsIHRyZWUpIHsKICBjb25zdCBbcm9vdCwgLi4uYWZ0ZXJdID0gdHJlZTsKICBpZiAocm9vdCA9PT0gU1RPUCkgcmV0dXJuIFtdOwogIGNvbnN0IGZpcnN0ID0gcmVhZChzaWduYXR1cmUsIHJvb3QpOwogIGNvbnN0IG5leHQgPSBhZnRlcltmaXJzdF07CiAgcmV0dXJuIG5leHQgPT09IFNUT1AgPyBbZmlyc3RdIDogW2ZpcnN0LCByZWFkKHNpZ25hdHVyZSwgbmV4dCldOwp9CgovLyBQcm9qZWN0aW9uIGV2YWx1YXRvciBidWlsZHMgdHJhbnNjcmlwdCBwYXJ0aXRpb25zIGJlZm9yZSBpbnNwZWN0aW5nIGluZGl2aWR1YWwgdHJpYWxzLgpmdW5jdGlvbiBzY29yZUJ5UHJvamVjdGlvbihjYXRhbG9nLCB0cmVlLCBwYXRocyA9IFRSVVRIUy5tYXAodHJ1dGggPT4gcGF0aCh0cnV0aCwgdHJlZSkpKSB7CiAgY29uc3QgYmlucyA9IG5ldyBNYXAoKTsKICBmb3IgKGNvbnN0IHRydXRoIG9mIGNhdGFsb2cpIHsKICAgIGNvbnN0IGtleSA9IHBhdGhzW3RydXRoXS5qb2luKCIiKTsKICAgIGJpbnMuc2V0KGtleSwgKGJpbnMuZ2V0KGtleSkgPz8gMCkgKyAxKTsKICB9CiAgY29uc3Qgc2NvcmUgPSB7Y29ycmVjdDowLCBmYWxzZTowLCByZWplY3RlZDowLCBpbnNpZGVVc2VzOjAsIG91dHNpZGVVc2VzOjB9OwogIGNvbnN0IGRlY2xhcmVkID0gbmV3IFNldChjYXRhbG9nKTsKICBmb3IgKGNvbnN0IHRydXRoIG9mIFRSVVRIUykgewogICAgY29uc3Qgb2JzZXJ2ZWQgPSBwYXRoc1t0cnV0aF07CiAgICBjb25zdCBtYXRjaGVzID0gYmlucy5nZXQob2JzZXJ2ZWQuam9pbigiIikpID8/IDA7CiAgICBpZiAoZGVjbGFyZWQuaGFzKHRydXRoKSkgewogICAgICBzY29yZS5pbnNpZGVVc2VzICs9IG9ic2VydmVkLmxlbmd0aDsKICAgICAgaWYgKG1hdGNoZXMgPT09IDEgJiYgb2JzZXJ2ZWQubGVuZ3RoKSBzY29yZS5jb3JyZWN0Kys7CiAgICB9IGVsc2UgewogICAgICBzY29yZS5vdXRzaWRlVXNlcyArPSBvYnNlcnZlZC5sZW5ndGg7CiAgICAgIGlmIChtYXRjaGVzID09PSAxICYmIG9ic2VydmVkLmxlbmd0aCkgc2NvcmUuZmFsc2UrKzsKICAgICAgaWYgKCFtYXRjaGVzKSBzY29yZS5yZWplY3RlZCsrOwogICAgfQogIH0KICByZXR1cm4gc2NvcmU7Cn0KCi8vIE9yYWNsZSB0cmF2ZXJzZXMgb25lIG9ic2VydmF0aW9uIGF0IGEgdGltZSBhbmQgZHJvcHMgaW5jb25zaXN0ZW50IHJvd3MuCmZ1bmN0aW9uIG9ic2VydmUoY2F0YWxvZywgW3Jvb3QsIG5lZ2F0aXZlLCBwb3NpdGl2ZV0sIHRydXRoKSB7CiAgbGV0IGF2YWlsYWJsZSA9IGNhdGFsb2c7CiAgbGV0IHByb2JlcyA9IDA7CiAgZm9yIChsZXQgbmV4dCA9IHJvb3Q7IG5leHQgIT09IFNUT1AgJiYgcHJvYmVzIDwgMjspIHsKICAgIGNvbnN0IG91dGNvbWUgPSAodHJ1dGggJiAoMSA8PCBuZXh0KSkgPT09IDAgPyAwIDogMTsKICAgIGF2YWlsYWJsZSA9IGF2YWlsYWJsZS5maWx0ZXIoY2FuZGlkYXRlID0+CiAgICAgICgoY2FuZGlkYXRlICYgKDEgPDwgbmV4dCkpID09PSAwKSA9PT0gKG91dGNvbWUgPT09IDApKTsKICAgIHByb2JlcysrOwogICAgbmV4dCA9IG91dGNvbWUgPyBwb3NpdGl2ZSA6IG5lZ2F0aXZlOwogIH0KICByZXR1cm4ge2xhYmVsOiAhYXZhaWxhYmxlLmxlbmd0aCA/ICJyZWZ1dGUiIDoKICAgIHByb2JlcyAmJiBhdmFpbGFibGUubGVuZ3RoID09PSAxID8gYXZhaWxhYmxlWzBdIDogImFic3RhaW4iLCBwcm9iZXN9Owp9CgpmdW5jdGlvbiBzY29yZUJ5UmVwbGF5KGNhdGFsb2csIHRyZWUpIHsKICBjb25zdCBzY29yZSA9IHtjb3JyZWN0OjAsIGZhbHNlOjAsIHJlamVjdGVkOjAsIGluc2lkZVVzZXM6MCwgb3V0c2lkZVVzZXM6MH07CiAgZm9yIChsZXQgdHJ1dGggPSAwOyB0cnV0aCA8IDE2OyB0cnV0aCsrKSB7CiAgICBjb25zdCB7bGFiZWwsIHByb2Jlc30gPSBvYnNlcnZlKGNhdGFsb2csIHRyZWUsIHRydXRoKTsKICAgIGlmIChjYXRhbG9nLmluY2x1ZGVzKHRydXRoKSkgewogICAgICBzY29yZS5pbnNpZGVVc2VzICs9IHByb2JlczsKICAgICAgaWYgKGxhYmVsID09PSB0cnV0aCkgc2NvcmUuY29ycmVjdCsrOwogICAgICBlbHNlIGlmIChsYWJlbCAhPT0gImFic3RhaW4iKSB0aHJvdyBFcnJvcigiSU5fQ0FUQUxPR19XUk9OR19TRUxFQ1RJT04iKTsKICAgIH0gZWxzZSB7CiAgICAgIHNjb3JlLm91dHNpZGVVc2VzICs9IHByb2JlczsKICAgICAgaWYgKGxhYmVsID09PSAicmVmdXRlIikgc2NvcmUucmVqZWN0ZWQrKzsKICAgICAgZWxzZSBpZiAodHlwZW9mIGxhYmVsID09PSAibnVtYmVyIikgc2NvcmUuZmFsc2UrKzsKICAgIH0KICB9CiAgcmV0dXJuIHNjb3JlOwp9Cgpjb25zdCBGSUVMRFMgPSBbImNvcnJlY3QiLCAiZmFsc2UiLCAicmVqZWN0ZWQiLCAiaW5zaWRlVXNlcyIsICJvdXRzaWRlVXNlcyJdOwpjb25zdCBlbXB0eSA9ICgpID0+IE9iamVjdC5mcm9tRW50cmllcyhGSUVMRFMubWFwKGZpZWxkID0+IFtmaWVsZCwgMF0pKTsKCmZ1bmN0aW9uIGJldHRlcihjYW5kaWRhdGUsIGluY3VtYmVudCwgcmVqZWN0cykgewogIGlmICghaW5jdW1iZW50IHx8IGNhbmRpZGF0ZS5jb3JyZWN0ICE9PSBpbmN1bWJlbnQuY29ycmVjdCkgewogICAgcmV0dXJuICFpbmN1bWJlbnQgfHwgY2FuZGlkYXRlLmNvcnJlY3QgPiBpbmN1bWJlbnQuY29ycmVjdDsKICB9CiAgaWYgKHJlamVjdHMgJiYgY2FuZGlkYXRlLmZhbHNlICE9PSBpbmN1bWJlbnQuZmFsc2UpIHJldHVybiBjYW5kaWRhdGUuZmFsc2UgPCBpbmN1bWJlbnQuZmFsc2U7CiAgcmV0dXJuIGNhbmRpZGF0ZS5pbnNpZGVVc2VzIDwgaW5jdW1iZW50Lmluc2lkZVVzZXM7Cn0KCmZ1bmN0aW9uIHJ1bigpIHsKICBjb25zdCBjYW5kaWRhdGVzID0gWy4uLnRyZWVzKCldLm1hcCh0cmVlID0+IFt0cmVlLCBUUlVUSFMubWFwKHRydXRoID0+IHBhdGgodHJ1dGgsIHRyZWUpKV0pOwogIGNvbnN0IGJhc2VsaW5lID0gZW1wdHkoKSwgZ3VhcmRlZCA9IGVtcHR5KCksIHJlY29yZHMgPSBbXTsKICBsZXQgdHJlZUNoZWNrcyA9IDA7CiAgZm9yIChjb25zdCBjYXRhbG9nIG9mIGNhdGFsb2dzKCkpIHsKICAgIGxldCBiYXNlLCBndWFyZCwgYmFzZVRyZWUsIGd1YXJkVHJlZTsKICAgIGZvciAoY29uc3QgW3RyZWUsIHBhdGhzXSBvZiBjYW5kaWRhdGVzKSB7CiAgICAgIGNvbnN0IHNjb3JlID0gc2NvcmVCeVByb2plY3Rpb24oY2F0YWxvZywgdHJlZSwgcGF0aHMpOwogICAgICBjb25zdCBpbmRlcGVuZGVudCA9IHNjb3JlQnlSZXBsYXkoY2F0YWxvZywgdHJlZSk7CiAgICAgIGlmICghRklFTERTLmV2ZXJ5KGtleSA9PiBzY29yZVtrZXldID09PSBpbmRlcGVuZGVudFtrZXldKSkgdGhyb3cgRXJyb3IoIk9SQUNMRV9ESVNBR1JFRVMiKTsKICAgICAgdHJlZUNoZWNrcysrOwogICAgICBpZiAoYmV0dGVyKHNjb3JlLCBiYXNlLCBmYWxzZSkpIHsgYmFzZSA9IHNjb3JlOyBiYXNlVHJlZSA9IHRyZWU7IH0KICAgICAgaWYgKGJldHRlcihzY29yZSwgZ3VhcmQsIHRydWUpKSB7IGd1YXJkID0gc2NvcmU7IGd1YXJkVHJlZSA9IHRyZWU7IH0KICAgIH0KICAgIGlmIChiYXNlLmNvcnJlY3QgIT09IGd1YXJkLmNvcnJlY3QgfHwgYmFzZS5mYWxzZSA8IGd1YXJkLmZhbHNlKSB0aHJvdyBFcnJvcigiSU5WQUxJRF9DT01QQVJJU09OIik7CiAgICBmb3IgKGNvbnN0IGZpZWxkIG9mIEZJRUxEUykgewogICAgICBiYXNlbGluZVtmaWVsZF0gKz0gYmFzZVtmaWVsZF07CiAgICAgIGd1YXJkZWRbZmllbGRdICs9IGd1YXJkW2ZpZWxkXTsKICAgIH0KICAgIHJlY29yZHMucHVzaCh7Y2F0YWxvZywgYmFzZVRyZWUsIGd1YXJkVHJlZSwgYmFzZSwgZ3VhcmR9KTsKICB9CiAgY29uc3QgaW5zaWRlID0gcmVjb3Jkcy5sZW5ndGggKiA0LCBvdXRzaWRlID0gcmVjb3Jkcy5sZW5ndGggKiAxMjsKICBjb25zdCByZWR1Y2VkRmFsc2UgPSBiYXNlbGluZS5mYWxzZSAtIGd1YXJkZWQuZmFsc2U7CiAgY29uc3QgZXh0cmFJbnNpZGVVc2VzID0gZ3VhcmRlZC5pbnNpZGVVc2VzIC0gYmFzZWxpbmUuaW5zaWRlVXNlczsKICByZXR1cm4ge3NjaGVtYToiYTA2LmNhdGFsb2ctcmVqZWN0aW9uLnYxIiwgcHJvdG9jb2w6IjMxNjdjOWUwYTJkMzdkZjE0OTk4OTRmMjU4MTZjN2IwYjY3YWQ0MGUiLAogICAgY2F0YWxvZ3M6cmVjb3Jkcy5sZW5ndGgsIHRyZWVzOmNhbmRpZGF0ZXMubGVuZ3RoLCB0cmVlQ2hlY2tzLCBpbnNpZGUsIG91dHNpZGUsCiAgICBpbXByb3ZlZENhdGFsb2dzOnJlY29yZHMuZmlsdGVyKCh7YmFzZSxndWFyZH0pID0+IGJhc2UuZmFsc2UgPiBndWFyZC5mYWxzZSkubGVuZ3RoLAogICAgYmFzZWxpbmUsIGd1YXJkZWQsIHJlZHVjZWRGYWxzZSwgZXh0cmFJbnNpZGVVc2VzLAogICAgZGVjaXNpb246IHJlZHVjZWRGYWxzZSoxMCA+PSBvdXRzaWRlICYmIGV4dHJhSW5zaWRlVXNlcyoyIDw9IGluc2lkZSA/ICJQQVNTIiA6ICJSRUZVVEVEIiwKICAgIHJlY29yZHN9Owp9CgpleHBvcnQge29ic2VydmUsIHJ1biwgc2NvcmVCeVByb2plY3Rpb24sIHNjb3JlQnlSZXBsYXl9Owo=
+// A06. Signed-off study protocol lives alongside this implementation.
+const TRUTHS = Array.from({length: 16}, (_, signature) => signature);
+const PROBES = [0, 1, 2, 3];
+const STOP = -1;
+const read = (signature, probe) => signature >> probe & 1;
+
+function* trees() {
+  yield [STOP, STOP, STOP];
+  for (const root of PROBES) {
+    const options = [STOP, ...PROBES.filter(probe => probe !== root)];
+    for (const left of options) for (const right of options) yield [root, left, right];
+  }
+}
+
+function* catalogs() {
+  for (let a = 0; a < 13; a++) for (let b = a+1; b < 14; b++) {
+    for (let c = b+1; c < 15; c++) for (let d = c+1; d < 16; d++) yield [a,b,c,d];
+  }
+}
+
+function path(signature, tree) {
+  const [root, ...after] = tree;
+  if (root === STOP) return [];
+  const first = read(signature, root);
+  const next = after[first];
+  return next === STOP ? [first] : [first, read(signature, next)];
+}
+
+// Projection evaluator builds transcript partitions before inspecting individual trials.
+function scoreByProjection(catalog, tree, paths = TRUTHS.map(truth => path(truth, tree))) {
+  const bins = new Map();
+  for (const truth of catalog) {
+    const key = paths[truth].join("");
+    bins.set(key, (bins.get(key) ?? 0) + 1);
+  }
+  const score = {correct:0, false:0, rejected:0, insideUses:0, outsideUses:0};
+  const declared = new Set(catalog);
+  for (const truth of TRUTHS) {
+    const observed = paths[truth];
+    const matches = bins.get(observed.join("")) ?? 0;
+    if (declared.has(truth)) {
+      score.insideUses += observed.length;
+      if (matches === 1 && observed.length) score.correct++;
+    } else {
+      score.outsideUses += observed.length;
+      if (matches === 1 && observed.length) score.false++;
+      if (!matches) score.rejected++;
+    }
+  }
+  return score;
+}
+
+// Oracle traverses one observation at a time and drops inconsistent rows.
+function observe(catalog, [root, negative, positive], truth) {
+  let available = catalog;
+  let probes = 0;
+  for (let next = root; next !== STOP && probes < 2;) {
+    const outcome = (truth & (1 << next)) === 0 ? 0 : 1;
+    available = available.filter(candidate =>
+      ((candidate & (1 << next)) === 0) === (outcome === 0));
+    probes++;
+    next = outcome ? positive : negative;
+  }
+  return {label: !available.length ? "refute" :
+    probes && available.length === 1 ? available[0] : "abstain", probes};
+}
+
+function scoreByReplay(catalog, tree) {
+  const score = {correct:0, false:0, rejected:0, insideUses:0, outsideUses:0};
+  for (let truth = 0; truth < 16; truth++) {
+    const {label, probes} = observe(catalog, tree, truth);
+    if (catalog.includes(truth)) {
+      score.insideUses += probes;
+      if (label === truth) score.correct++;
+      else if (label !== "abstain") throw Error("IN_CATALOG_WRONG_SELECTION");
+    } else {
+      score.outsideUses += probes;
+      if (label === "refute") score.rejected++;
+      else if (typeof label === "number") score.false++;
+    }
+  }
+  return score;
+}
+
+const FIELDS = ["correct", "false", "rejected", "insideUses", "outsideUses"];
+const empty = () => Object.fromEntries(FIELDS.map(field => [field, 0]));
+
+function better(candidate, incumbent, rejects) {
+  if (!incumbent || candidate.correct !== incumbent.correct) {
+    return !incumbent || candidate.correct > incumbent.correct;
+  }
+  if (rejects && candidate.false !== incumbent.false) return candidate.false < incumbent.false;
+  return candidate.insideUses < incumbent.insideUses;
+}
+
+function run() {
+  const candidates = [...trees()].map(tree => [tree, TRUTHS.map(truth => path(truth, tree))]);
+  const baseline = empty(), guarded = empty(), records = [];
+  let treeChecks = 0;
+  for (const catalog of catalogs()) {
+    let base, guard, baseTree, guardTree;
+    for (const [tree, paths] of candidates) {
+      const score = scoreByProjection(catalog, tree, paths);
+      const independent = scoreByReplay(catalog, tree);
+      if (!FIELDS.every(key => score[key] === independent[key])) throw Error("ORACLE_DISAGREES");
+      treeChecks++;
+      if (better(score, base, false)) { base = score; baseTree = tree; }
+      if (better(score, guard, true)) { guard = score; guardTree = tree; }
+    }
+    if (base.correct !== guard.correct || base.false < guard.false) throw Error("INVALID_COMPARISON");
+    for (const field of FIELDS) {
+      baseline[field] += base[field];
+      guarded[field] += guard[field];
+    }
+    records.push({catalog, baseTree, guardTree, base, guard});
+  }
+  const inside = records.length * 4, outside = records.length * 12;
+  const reducedFalse = baseline.false - guarded.false;
+  const extraInsideUses = guarded.insideUses - baseline.insideUses;
+  return {schema:"a06.catalog-rejection.v1", protocol:"3167c9e0a2d37df1499894f25816c7b0b67ad40e",
+    catalogs:records.length, trees:candidates.length, treeChecks, inside, outside,
+    improvedCatalogs:records.filter(({base,guard}) => base.false > guard.false).length,
+    baseline, guarded, reducedFalse, extraInsideUses,
+    decision: reducedFalse*10 >= outside && extraInsideUses*2 <= inside ? "PASS" : "REFUTED",
+    records};
+}
+
+export {observe, run, scoreByProjection, scoreByReplay};
