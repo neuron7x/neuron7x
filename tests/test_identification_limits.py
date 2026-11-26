@@ -135,3 +135,12 @@ class WideMenuPolicy(unittest.TestCase):
         probes = [3, 0, 5, 6, 2, 1, 4, 8, 7]
         relabeled = [tuple(matrix[row][index] for index in probes) for row in order]
         self.assertEqual(reconcile(relabeled), (actual, recovered))
+
+    def test_wide_menu_optima_replay_the_sealed_report(self):
+        import json
+
+        from budgeted_wider import run
+        from study import sealed
+
+        saved, _ = sealed(STUDY / "evidence", "budgeted_wider.json")
+        self.assertEqual(json.loads(json.dumps(run())), saved)
