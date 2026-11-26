@@ -1,0 +1,27 @@
+{
+  "schema": "a06.catalog-rejection.v1",
+  "protocol": "3167c9e0a2d37df1499894f25816c7b0b67ad40e",
+  "catalogs": 1820,
+  "trees": 65,
+  "treeChecks": 118300,
+  "inside": 7280,
+  "outside": 21840,
+  "improvedCatalogs": 176,
+  "baseline": {
+    "correct": 6928,
+    "false": 21488,
+    "rejected": 0,
+    "insideUses": 14384,
+    "outsideUses": 42448
+  },
+  "guarded": {
+    "correct": 6928,
+    "false": 20784,
+    "rejected": 704,
+    "insideUses": 14560,
+    "outsideUses": 43680
+  },
+  "reducedFalse": 704,
+  "extraInsideUses": 176,
+  "decision": "REFUTED"
+}
