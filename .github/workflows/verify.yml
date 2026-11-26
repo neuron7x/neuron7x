@@ -20,24 +20,37 @@ jobs:
       fail-fast: false
       matrix:
         target: ${{ fromJSON(github.event_name == 'pull_request' && '["pr-head","merge-preview"]' || '["commit"]') }}
-    env:
-      EXPECTED_SHA: ${{ matrix.target == 'pr-head' && github.event.pull_request.head.sha || github.sha }}
-      REPORT_PATH: ${{ runner.temp }}/release-verification.json
     steps:
+      - name: Resolve the event revision
+        id: select
+        env:
+          TARGET: ${{ matrix.target }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          EVENT_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          if [[ "$TARGET" == pr-head ]]; then sha="$PR_HEAD"; else sha="$EVENT_SHA"; fi
+          [[ "$sha" =~ ^[a-f0-9]{40}$ ]]
+          printf 'sha=%s\n' "$sha" >> "$GITHUB_OUTPUT"
       - name: Check out the exact candidate
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ env.EXPECTED_SHA }}
+          ref: ${{ steps.select.outputs.sha }}
           persist-credentials: false
       - name: Select Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22.16.0'
+          package-manager-cache: false
       - name: Select Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12.10'
       - name: Run offline proof and validate the report
+        env:
+          EXPECTED_SHA: ${{ steps.select.outputs.sha }}
+          REPORT_PATH: ${{ runner.temp }}/release-verification.json
+          GIT_NO_REPLACE_OBJECTS: '1'
         shell: bash
         run: |
           umask 022
@@ -49,29 +62,62 @@ jobs:
           python3 -B - "$EXPECTED_SHA" "$(git rev-parse 'HEAD^{tree}')" "$REPORT_PATH" <<'PY'
           import hashlib
           import json
+          import subprocess
           import sys
-          from pathlib import Path
 
           commit, tree, path = sys.argv[1:]
           with open(path, encoding="utf-8") as artifact:
               report = json.load(artifact)
-          rows = report.get("checks", ())
-          controls = [row for row in rows if row["kind"] == "negative-control"]
-          expected_verifier = hashlib.sha256(Path("tools/verify_release.py").read_bytes()).hexdigest()
+          rows = report.get("checks")
+          expected_names = {
+              "check": {
+                  "Node test suite", "Python test suite", "CLI conformance",
+                  "Epistemic Signal renderer", "Research Atlas renderer",
+              },
+              "negative-control": {
+                  "CLI rejects changed exact trace", "Epistemic Signal rejects changed SVG",
+                  "Research Atlas rejects changed Markdown", "Inference rejects granted causal authority",
+                  "Receipt rejects detached declarations and evidence",
+                  "Anchored verification rejects a substituted case and receipt",
+                  "Receipt detects inflated selection forecasts", "Git tree verifier rejects a symbolic link",
+                  "Receipt rejects a coherent coverage loss", "Receipt rejects coherent excess action cost",
+                  "Receipt rejects a coherent wrong root tie", "Receipt rejects a coherent wrong branch tie",
+                  "Dual anchors reject a valid sibling substitution",
+                  "Git tree hash rejects an unrelated altered entry", "Archive index rejects hidden tracked files",
+                  "Source verification rejects a modified raw commit", "Release entrypoint rejects a stale verifier",
+              },
+          }
+          seen = {kind: set() for kind in expected_names}
+          all_names = set()
+          if not isinstance(rows, list):
+              raise SystemExit("Missing release checks")
+          for row in rows:
+              kind = row.get("kind")
+              name = row.get("name")
+              if kind not in seen or not isinstance(name, str) or not name or name in all_names:
+                  raise SystemExit("Missing, repeated or unknown release check")
+              expected = 0 if kind == "check" else 1
+              exits = (row.get("expected_exit"), row.get("actual_exit"))
+              if row.get("status") != "PASS" or any(type(code) is not int or code != expected for code in exits):
+                  raise SystemExit("Unexpected verification result")
+              seen[kind].add(name)
+              all_names.add(name)
+          committed_verifier = subprocess.check_output(["git", "show", f"{commit}:tools/verify_release.py"])
+          blob_count = subprocess.check_output(["git", "ls-tree", "-rz", commit]).count(b"\0")
           if (report.get("schema") != "neuron7x.release-verification.v1"
-                  or report.get("status") != "PASS"
+                  or report.get("status") != "PASS" or report.get("failed_stage") is not None
                   or report.get("commit") != commit or report.get("tree") != tree
-                  or report.get("verifier_sha256") != expected_verifier
-                  or sum(row["kind"] == "check" for row in rows) < 5
-                  or len(controls) < 16
-                  or any(row["status"] != "PASS" or row["actual_exit"] != row["expected_exit"] for row in rows)):
+                  or report.get("verifier_sha256") != hashlib.sha256(committed_verifier).hexdigest()
+                  or report.get("tracked_blobs_verified") != blob_count
+                  or report.get("negative_controls") != {"passed": len(seen["negative-control"]), "failed": 0}
+                  or any(not required <= seen[kind] for kind, required in expected_names.items())):
               raise SystemExit("Incomplete or mismatched release proof")
           PY
       - name: Preserve the report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: evidence-${{ matrix.target }}-${{ env.EXPECTED_SHA }}-attempt-${{ github.run_attempt }}
-          path: ${{ env.REPORT_PATH }}
+          name: evidence-${{ matrix.target }}-${{ steps.select.outputs.sha }}-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-verification.json
           if-no-files-found: error
           retention-days: 30

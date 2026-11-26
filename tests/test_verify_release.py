@@ -106,3 +106,15 @@ class ReleaseArchiveTest(unittest.TestCase):
                                lambda result: result.stdout == "expected diagnostic")
         self.assertEqual(records, [{"name": "control", "kind": "negative-control",
                                     "expected_exit": 1, "actual_exit": 1, "status": "FAIL"}])
+
+    def test_positive_suite_checks_reject_incomplete_or_contradictory_output(self):
+        full = ("TAP version 13\nok 1 - sample\n1..1\n# tests 1\n# suites 0\n"
+                "# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1.2\n")
+        self.assertTrue(gate.node_suite(subprocess.CompletedProcess([], 0, full, "")))
+        for text in ["# tests 1\n# pass 1\n", full.replace("# fail 0", "# fail 1"),
+                     full.replace("# skipped 0", "# skipped 1"), full.replace("ok 1", "ok 2")]:
+            self.assertFalse(gate.node_suite(subprocess.CompletedProcess([], 0, text, "")))
+        python = "-" * 70 + "\nRan 1 test in 0.001s\n\nOK\n"
+        self.assertTrue(gate.python_suite(subprocess.CompletedProcess([], 0, "", python)))
+        for text in [python.replace("0.001s", "wrong"), "Ran 2 tests in 0.001s\n" + python]:
+            self.assertFalse(gate.python_suite(subprocess.CompletedProcess([], 0, "", text)))

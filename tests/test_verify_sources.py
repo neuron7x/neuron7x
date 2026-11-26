@@ -1,7 +1,11 @@
 import hashlib
+import subprocess
+import tempfile
+import time
 import sys
 import unittest
 from unittest.mock import patch
+from pathlib import Path
 
 from tools import verify_sources as source
 
@@ -40,3 +44,26 @@ class SourceProofTest(unittest.TestCase):
         command = [sys.executable, "-c", "print('x' * 4096)"]
         with self.assertRaisesRegex(source.SourceError, "byte limit"):
             source.bounded_command(command, 5, 12)
+
+    def test_git_environment_ignores_url_rewrite_and_alternate_object_store(self):
+        inherited = {**source.AUTH_ENV, "GIT_CONFIG_COUNT": "1",
+                     "GIT_CONFIG_KEY_0": "url.https://outside.invalid/.insteadOf",
+                     "GIT_CONFIG_VALUE_0": "https://github.com/",
+                     "GIT_OBJECT_DIRECTORY": "/outside/objects"}
+        env = source.isolated_git_env(inherited)
+        url = "https://github.com/neuron7x/sample.git"
+        command = ["git", "ls-remote", "--get-url", url]
+        self.assertEqual(subprocess.check_output(command, env=env).decode().strip(), url)
+        self.assertNotIn("GIT_OBJECT_DIRECTORY", env)
+        self.assertEqual(env["GIT_ALLOW_PROTOCOL"], "https")
+
+    def test_timeout_stops_descendants_before_they_can_write(self):
+        with tempfile.TemporaryDirectory(prefix="source-timeout-test-") as directory:
+            file = Path(directory) / "marker"
+            delayed = "import sys,time; from pathlib import Path; time.sleep(0.4); Path(sys.argv[1]).touch()"
+            relay = "import subprocess,sys,time; subprocess.Popen(sys.argv[1:]); time.sleep(5)"
+            command = [sys.executable, "-c", relay, sys.executable, "-c", delayed, str(file)]
+            with self.assertRaisesRegex(source.SourceError, "timed out"):
+                source.bounded_command(command, 0.2)
+            time.sleep(0.45)
+            self.assertFalse(file.exists())

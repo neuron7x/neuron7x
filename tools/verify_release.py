@@ -129,14 +129,26 @@ def run_check(
 
 
 def node_suite(result: subprocess.CompletedProcess[str]) -> bool:
-    count = re.search(r"^# tests ([1-9][0-9]*)$", result.stdout, re.MULTILINE)
-    return count is not None and f"# pass {count[1]}" in result.stdout.splitlines()
+    output = result.stdout
+    summary = re.search(
+        r"^1\.\.([1-9]\d*)\n# tests ([1-9]\d*)\n# suites \d+\n# pass ([1-9]\d*)\n"
+        r"# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms \d+(?:\.\d+)?\n?\Z",
+        output, re.MULTILINE,
+    )
+    if summary is None or not output.startswith("TAP version 13\n") or summary[2] != summary[3]:
+        return False
+    if len(re.findall(r"^# tests ", output, re.MULTILINE)) != 1:
+        return False
+    top = re.findall(r"^ok ([1-9]\d*) - ", output[:summary.start()], re.MULTILINE)
+    return len(top) == int(summary[1]) and all(int(number) == index for index, number in enumerate(top, 1))
 
 
 def python_suite(result: subprocess.CompletedProcess[str]) -> bool:
+    summary = result.stderr
     return (
-        re.search(r"^Ran [1-9][0-9]* tests? in ", result.stderr, re.MULTILINE) is not None
-        and result.stderr.rstrip().endswith("\nOK")
+        len(re.findall(r"^Ran ", summary, re.MULTILINE)) == 1
+        and re.search(r"^-{70}\nRan [1-9]\d* tests? in \d+(?:\.\d+)?s\n\nOK\n?\Z", summary, re.MULTILINE)
+        is not None
     )
 
 

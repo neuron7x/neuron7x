@@ -8,6 +8,7 @@ import json
 import os
 import re
 import selectors
+import signal
 import subprocess
 import sys
 import tempfile
@@ -21,21 +22,36 @@ OWNER = "neuron7x"
 REPOSITORY = re.compile(r"neuron7x/[A-Za-z0-9_.-]+")
 OBJECT_LIMIT = 8 * 1024 * 1024
 AUTH_ENV = {key: value for key, value in release.VERIFY_ENV.items()
-            if key not in {"GH_DEBUG", "GIT_TRACE_CURL", "GIT_CURL_VERBOSE"}}
+            if key != "GH_DEBUG" and not key.startswith("GIT_TRACE")
+            and key != "GIT_CURL_VERBOSE"}
 AUTH_ENV.update(GH_PROMPT_DISABLED="1", GIT_TERMINAL_PROMPT="0")
+
+
+def isolated_git_env(base: dict[str, str]) -> dict[str, str]:
+    env = {key: value for key, value in base.items() if not key.startswith("GIT_")}
+    env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull, GIT_TERMINAL_PROMPT="0",
+               GIT_NO_REPLACE_OBJECTS="1", GIT_ALLOW_PROTOCOL="https")
+    return env
+
+
+GIT_ENV = isolated_git_env(AUTH_ENV)
+
 
 
 class SourceError(Exception):
     pass
 
 
-def bounded_command(command: list[str], timeout: int, limit: int = OBJECT_LIMIT) -> bytes:
+def bounded_command(command: list[str], timeout: float, limit: int = OBJECT_LIMIT,
+                    env: dict[str, str] = AUTH_ENV) -> bytes:
     deadline = time.monotonic() + timeout
     result = bytearray()
     with (
-        subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=AUTH_ENV) as child,
+        subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=env,
+                         start_new_session=True) as child,
         selectors.DefaultSelector() as ready,
     ):
+        completed = False
         try:
             ready.register(child.stdout, selectors.EVENT_READ)
             while True:
@@ -50,9 +66,13 @@ def bounded_command(command: list[str], timeout: int, limit: int = OBJECT_LIMIT)
                     raise SourceError(f"Read exceeded byte limit: {command[0]}")
             if child.wait(timeout=max(0, deadline - time.monotonic())) != 0:
                 raise SourceError(f"Read command failed: {command[0]} {command[-1]}")
+            completed = True
         finally:
-            if child.poll() is None:
-                child.kill()
+            if not completed:
+                try:
+                    os.killpg(child.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
                 child.wait()
     return bytes(result)
 
@@ -94,13 +114,20 @@ def read_commit_tree(repository: str, commit: str) -> str:
         raise SourceError("Malformed pinned commit SHA")
     with tempfile.TemporaryDirectory(prefix="verify-git-commit-") as directory:
         git = ["git", "-C", directory]
-        bounded_command([*git, "init", "--quiet", "--bare", "--object-format=sha1"], 10)
-        bounded_command([*git, "remote", "add", "origin", f"https://github.com/{repository}.git"], 10)
-        bounded_command([*git, "config", "remote.origin.promisor", "true"], 10)
-        bounded_command([*git, "-c", "protocol.version=2", "-c", "credential.helper=",
-                         "-c", "credential.helper=!gh auth git-credential", "fetch", "--quiet",
-                         "--depth=1", "--filter=tree:0", "--no-tags", "origin", commit], 45)
-        return checked_commit_tree(bounded_command([*git, "cat-file", "commit", commit], 10), commit)
+
+        def run(*arguments: str, timeout: int = 10) -> bytes:
+            return bounded_command([*git, *arguments], timeout, env=GIT_ENV)
+
+        url = f"https://github.com/{repository}.git"
+        run("init", "--quiet", "--bare", "--object-format=sha1")
+        run("remote", "add", "origin", url)
+        if run("remote", "get-url", "origin") != (url + "\n").encode("ascii"):
+            raise SourceError("Effective Git remote differs from the authorized source")
+        run("config", "remote.origin.promisor", "true")
+        run("-c", "protocol.version=2", "-c", "credential.helper=",
+            "-c", "credential.helper=!gh auth git-credential", "-c", "http.followRedirects=false",
+            "fetch", "--quiet", "--depth=1", "--filter=tree:0", "--no-tags", "origin", commit, timeout=45)
+        return checked_commit_tree(run("cat-file", "commit", commit), commit)
 
 
 def verify_pins(data: dict, report: dict) -> None:
