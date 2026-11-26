@@ -1,0 +1,8 @@
+Python 3.12.3
+v22.23.2
+git version 2.43.0
+generate elapsed_s=50.70 peak_rss_kib=209980 exit=0
+evaluate elapsed_s=0.96 peak_rss_kib=87924 exit=0
+decide elapsed_s=0.07 peak_rss_kib=31028 exit=0
+ec2 elapsed_s=0.15 peak_rss_kib=85288 exit=0
+audit elapsed_s=0.40 peak_rss_kib=34768 exit=0
