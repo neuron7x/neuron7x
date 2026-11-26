@@ -95,3 +95,26 @@ endmodule
         actual = packed(circuit, vectors, faults)
         separate = zip(*(circuit.simulate(vector, faults) for vector in vectors), strict=True)
         self.assertEqual([tuple(row) for row in actual], list(separate))
+
+
+class IdentificationEvidence(unittest.TestCase):
+    def test_full_lattice_replays_the_sealed_report(self):
+        import json
+
+        from study import run, sealed
+
+        saved, _ = sealed(STUDY / "evidence", "study.json")
+        self.assertEqual(json.loads(json.dumps(run())), saved)
+
+    def test_wider_signatures_replay_the_locked_summaries(self):
+        import json
+
+        from study import ADAPTIVITY, sealed
+        from wider import summarize
+
+        wider, _ = sealed(STUDY / "evidence", "wider.json")
+        baseline, digest = sealed(ADAPTIVITY / "replication" / "evidence", "inputs.json")
+        self.assertEqual(wider["input_sha256"], digest)
+        self.assertEqual(json.loads(json.dumps(summarize(wider, baseline))), wider["summary"])
+        self.assertEqual(wider["summary"]["resolved_rows"], 400)
+        self.assertEqual(wider["summary"]["remaining_rows"], 258)
