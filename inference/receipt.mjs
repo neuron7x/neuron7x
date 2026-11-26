@@ -1,29 +1,38 @@
 import { createHash } from "node:crypto";
+import { types } from "node:util";
 import { EXACT_CLASS_TWO_STEP, EXACT_TWO_STEP, infer, validate } from "./kernel.mjs";
 
 const SCHEMA = "neuron7x.inference-receipt.v1";
 const RECEIPT_HASH = /^[0-9a-f]{64}$/;
 
 // Canonical representation for this version: sort object keys, preserve array order.
-function canonical(value) {
+function canonical(value, depth = 0) {
+  if (depth > 64 || types.isProxy(value)) throw Error("INVALID_RECEIPT_VALUE");
   if (value === null || typeof value === "string" || typeof value === "boolean" || Number.isFinite(value)) {
     return JSON.stringify(value);
   }
-  if (Array.isArray(value)) {
-    if (Object.keys(value).length !== value.length) throw Error("INVALID_RECEIPT_VALUE");
-    const elements = [];
-    for (let index = 0; index < value.length; index++) {
-      if (!Object.hasOwn(value, index)) throw Error("INVALID_RECEIPT_VALUE");
-      elements.push(canonical(value[index]));
-    }
-    return "[" + elements.join(",") + "]";
-  }
-  if (typeof value !== "object" || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) {
+  if (typeof value !== "object") throw Error("INVALID_RECEIPT_VALUE");
+  const array = Array.isArray(value);
+  if (!array && ![Object.prototype, null].includes(Object.getPrototypeOf(value))) {
     throw Error("INVALID_RECEIPT_VALUE");
   }
-  return "{" + Object.keys(value).sort().map(key => JSON.stringify(key) + ":" + canonical(value[key])).join(",") + "}";
+  const descriptors = Object.getOwnPropertyDescriptors(value);
+  const keys = Reflect.ownKeys(descriptors).filter(key => !(array && key === "length"));
+  if (array && keys.length !== value.length) throw Error("INVALID_RECEIPT_VALUE");
+  if (keys.some(key => typeof key !== "string")) throw Error("INVALID_RECEIPT_VALUE");
+
+  const names = array ? Array.from({ length: value.length }, (_, index) => String(index)) : keys.sort();
+  const encoded = names.map(key => {
+    if (!Object.hasOwn(descriptors, key)) throw Error("INVALID_RECEIPT_VALUE");
+    const property = descriptors[key];
+    if (!property.enumerable || !Object.hasOwn(property, "value")) throw Error("INVALID_RECEIPT_VALUE");
+    const entry = canonical(property.value, depth + 1);
+    return array ? entry : JSON.stringify(key) + ":" + entry;
+  }).join(",");
+  return array ? "[" + encoded + "]" : "{" + encoded + "}";
 }
 
+const snapshot = value => JSON.parse(canonical(value));
 const digest = value => createHash("sha256").update(canonical(value), "utf8").digest("hex");
 
 function declaration(input) {
@@ -110,11 +119,12 @@ function receiptAt(input, atlas, policy, start) {
 }
 
 export function createReceipt(input, atlas, policy = EXACT_TWO_STEP) {
-  validate(input);
-  return receiptAt(input, atlas, policy, input.observations.length);
+  const data = snapshot(input);
+  validate(data);
+  return receiptAt(data, snapshot(atlas), policy, data.observations.length);
 }
 
-export function verifyReceipt(input, atlas, receipt, expectedDigest) {
+function replayReceipt(input, atlas, receipt, expectedDigest) {
   if (!receipt || receipt.schema !== SCHEMA) throw Error("INVALID_RECEIPT");
   const replay = receiptAt(input, atlas, receipt.policy, receipt.start_records);
   if (canonical(replay) !== canonical(receipt)) throw Error("RECEIPT_MISMATCH");
@@ -125,14 +135,21 @@ export function verifyReceipt(input, atlas, receipt, expectedDigest) {
   return replay;
 }
 
+export function verifyReceipt(input, atlas, receipt, expectedDigest) {
+  return replayReceipt(snapshot(input), snapshot(atlas), snapshot(receipt), expectedDigest);
+}
+
 export function advanceReceipt(previous, current, atlas, receipt) {
-  verifyReceipt(previous, atlas, receipt);
-  validate(current);
-  const length = previous.observations.length;
-  if (digest(declaration(current)) !== receipt.declaration_sha256
-    || current.observations.length !== length + 1
-    || digest(current.observations.slice(0, length)) !== receipt.records_sha256) {
+  const prior = snapshot(previous);
+  const data = snapshot(current);
+  const pins = snapshot(atlas);
+  const trusted = replayReceipt(prior, pins, snapshot(receipt));
+  validate(data);
+  const length = prior.observations.length;
+  if (digest(declaration(data)) !== trusted.declaration_sha256
+    || data.observations.length !== length + 1
+    || digest(data.observations.slice(0, length)) !== trusted.records_sha256) {
     throw Error("RECEIPT_HISTORY_MISMATCH");
   }
-  return receiptAt(current, atlas, receipt.policy, receipt.start_records);
+  return receiptAt(data, pins, trusted.policy, trusted.start_records);
 }

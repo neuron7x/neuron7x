@@ -191,3 +191,23 @@ test("external receipt digest rejects a valid replacement case and receipt toget
   assert.throws(() => verifyReceipt(replacement, atlas, selfConsistent, known.receipt_sha256), /RECEIPT_ANCHOR_MISMATCH/);
   assert.throws(() => verifyReceipt(input, atlas, known, "invalid"), /INVALID_RECEIPT_ANCHOR/);
 });
+
+test("receipt boundaries reject live properties without executing getters or proxy traps", () => {
+  const input = fixture("adaptive_categorical");
+  const genuine = createReceipt(input, atlas);
+  const changed = add({ ...input, case_id: "other_case" }, "A", "1");
+  const disguised = structuredClone(genuine);
+  let reads = 0;
+  Object.defineProperty(disguised, "declaration_sha256", {
+    enumerable: true,
+    get() { reads++; return genuine.declaration_sha256; },
+  });
+  assert.throws(() => verifyReceipt(input, atlas, disguised), /INVALID_RECEIPT_VALUE/);
+  assert.throws(() => advanceReceipt(input, changed, atlas, disguised), /INVALID_RECEIPT_VALUE/);
+  const proxy = new Proxy(input, { ownKeys() { reads++; return Reflect.ownKeys(input); } });
+  assert.throws(() => createReceipt(proxy, atlas), /INVALID_RECEIPT_VALUE/);
+  assert.equal(reads, 0);
+  const cycle = { ...genuine };
+  cycle.loop = cycle;
+  assert.throws(() => verifyReceipt(input, atlas, cycle), /INVALID_RECEIPT_VALUE/);
+});
