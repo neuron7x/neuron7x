@@ -40,6 +40,22 @@ function declaration(input) {
   return declared;
 }
 
+function distinctBehaviors(models, columns) {
+  const representatives = [];
+  for (const model of models) {
+    if (!representatives.some(other => columns.every(id => other.predictions[id] === model.predictions[id]))) {
+      representatives.push(model);
+    }
+  }
+  return representatives;
+}
+
+function targets(input, survivors, policy) {
+  return policy === EXACT_CLASS_TWO_STEP
+    ? distinctBehaviors(survivors, input.experiments.map(entry => entry.id))
+    : survivors;
+}
+
 function observedEvidence(input, result, policy) {
   const active = new Set(input.experiments.filter(entry => entry.kind === "intervention").map(entry => entry.id));
   const models = [...input.models].sort((left, right) => left.id < right.id ? -1 : left.id === right.id ? 0 : 1);
@@ -54,8 +70,7 @@ function observedEvidence(input, result, policy) {
   const witness = input.observations.findIndex(obs => active.has(obs.experiment)
     && models.some(model => model.predictions[obs.experiment] !== obs.outcome));
   const ids = survivors.map(model => model.id);
-  const alternatives = new Set(survivors.map(model => JSON.stringify(input.experiments.map(entry => model.predictions[entry.id]))));
-  const eligible = policy === EXACT_CLASS_TWO_STEP ? alternatives.size === 1 : survivors.length === 1;
+  const eligible = targets(input, survivors, policy).length === 1;
   const selection = policy === EXACT_CLASS_TWO_STEP ? "CONDITIONAL_BEHAVIOR_CLASS_SELECTION" : "CONDITIONAL_MODEL_SELECTION";
   const verdict = ids.length === 0 ? "MODEL_CLASS_REFUTED" : eligible && witness >= 0 ? selection : "ABSTAIN";
   if (result.verdict !== verdict || canonical(result.survivors) !== canonical(ids)
@@ -84,6 +99,45 @@ function forecast(input, atlas, policy, initial) {
   return { first: next, branches };
 }
 
+// Score the returned plan from raw predictions and records, without calling infer.
+function verifyForecast(input, policy, result, plan, budget = input.budget) {
+  const active = new Set(input.experiments.filter(entry => entry.kind === "intervention").map(entry => entry.id));
+  const alreadyUsed = new Set(input.observations.map(obs => obs.experiment));
+  const available = [...active].filter(action => !alreadyUsed.has(action)).length;
+  const horizon = Math.min(2, budget - input.observations.length, available);
+  if (result.intervention_plan.horizon !== horizon) throw Error("INVALID_INFERENCE_FORECAST");
+  const fits = (model, records) => records.every(obs => model.predictions[obs.experiment] === obs.outcome);
+  const viable = input.models.filter(model => fits(model, input.observations));
+  let selected = 0;
+  let uses = 0;
+  for (const model of targets(input, viable, policy)) {
+    const records = [...input.observations];
+    function record(action) {
+      if (!active.has(action) || alreadyUsed.has(action) || records.some(obs => obs.experiment === action)
+        || records.length - input.observations.length >= result.intervention_plan.horizon) {
+        throw Error("INVALID_INFERENCE_FORECAST");
+      }
+      records.push({ experiment: action, outcome: model.predictions[action] });
+      uses++;
+    }
+    if (plan.first !== null) {
+      record(plan.first);
+      const second = plan.branches.find(branch => branch.outcome === model.predictions[plan.first])?.next;
+      if (second != null) record(second);
+    }
+    const survivors = input.models.filter(candidate => fits(candidate, records));
+    const witness = records.some(obs => active.has(obs.experiment)
+      && input.models.some(candidate => candidate.predictions[obs.experiment] !== obs.outcome));
+    if (witness && targets(input, survivors, policy).length === 1) selected++;
+  }
+  const advertised = policy === EXACT_CLASS_TWO_STEP
+    ? result.intervention_plan.selected_classes
+    : result.intervention_plan.selected_models;
+  if (advertised !== selected || result.intervention_plan.intervention_uses !== uses) {
+    throw Error("INVALID_INFERENCE_FORECAST");
+  }
+}
+
 function receiptAt(input, atlas, policy, start) {
   if (policy !== EXACT_TWO_STEP && policy !== EXACT_CLASS_TWO_STEP) throw Error("INVALID_RECEIPT_POLICY");
   validate(input);
@@ -94,6 +148,8 @@ function receiptAt(input, atlas, policy, start) {
   if (result.source_status !== "PINNED_REFERENCE_ONLY") throw Error("RECEIPT_SOURCE_MISMATCH");
   const budget = start + result.intervention_plan.horizon;
   const plan = forecast(initial, atlas, policy, result);
+  observedEvidence(initial, result, policy);
+  verifyForecast(initial, policy, result, plan);
   let next = plan.first;
   for (let index = start; index < input.observations.length; index++) {
     const event = input.observations[index];
@@ -101,6 +157,10 @@ function receiptAt(input, atlas, policy, start) {
     next = index === start ? plan.branches.find(branch => branch.outcome === event.outcome)?.next ?? null : null;
     result = infer({ ...input, budget, observations: input.observations.slice(0, index + 1) }, atlas, policy);
     if (result.next_intervention !== next) throw Error("RECEIPT_PLAN_MISMATCH");
+  }
+
+  if (input.observations.length > start) {
+    verifyForecast(input, policy, result, { first: next, branches: [] }, budget);
   }
 
   const body = {

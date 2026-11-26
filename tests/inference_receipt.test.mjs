@@ -234,3 +234,17 @@ test("transition verification rejects a rerooted receipt and a mismatched siblin
   assert.throws(() => verifyTransition(input, right, atlas, root, rightReceipt), /INVALID_RECEIPT_ANCHOR/);
   assert.throws(() => verifyTransition(input, right, atlas, root, rightReceipt, leftReceipt.receipt_sha256), /RECEIPT_ANCHOR_MISMATCH/);
 });
+
+test("forecast scores agree with executable terminal outcomes and total action uses", () => {
+  const input = fixture("adaptive_categorical");
+  for (const policy of [EXACT_TWO_STEP, EXACT_CLASS_TWO_STEP]) {
+    const root = createReceipt(input, atlas, policy);
+    assert.equal(root.forecast.first, "A");
+    assert.equal(root.result.intervention_plan.intervention_uses, 10);
+    assert.equal(root.result.intervention_plan.selected_models ?? root.result.intervention_plan.selected_classes, 5);
+    const terminal = createReceipt(fixture("interventional_split"), atlas, policy);
+    assert.equal(terminal.forecast.first, null);
+    assert.equal(terminal.result.intervention_plan.intervention_uses, 0);
+    assert.equal(terminal.result.intervention_plan.selected_models ?? terminal.result.intervention_plan.selected_classes, 1);
+  }
+});
