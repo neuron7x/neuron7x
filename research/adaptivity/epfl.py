@@ -4,6 +4,7 @@ from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from hashlib import sha1, sha256
 from pathlib import Path
+import os
 import subprocess
 
 UPSTREAM_COMMIT = "82d8cc6910419298e713a46644ed59fd3df53038"
@@ -188,17 +189,19 @@ def parse_blif(source: str) -> Circuit:
     raise ValueError("missing .end directive")
 
 
+def source_git(path: str | Path, *arguments: str) -> bytes:
+    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull, GIT_NO_REPLACE_OBJECTS="1",
+               GIT_NO_LAZY_FETCH="1", GIT_ALLOW_PROTOCOL="", GIT_TERMINAL_PROMPT="0")
+    return subprocess.run(["git", "-C", str(path), *arguments], env=env, check=True,
+                          capture_output=True, timeout=30).stdout
+
+
 def load_sources(path: str | Path) -> Iterator[tuple[str, str, Circuit]]:
     """Load corpus bytes from Git objects and record their SHA-256 digests."""
-    def git(*arguments: str) -> bytes:
-        return subprocess.run(
-            ["git", "--no-replace-objects", "-C", str(path), *arguments],
-            check=True, capture_output=True,
-        ).stdout
-
-    if git("rev-parse", "HEAD").decode("ascii").strip() != UPSTREAM_COMMIT:
+    if source_git(path, "rev-parse", "HEAD").decode("ascii").strip() != UPSTREAM_COMMIT:
         raise ValueError("EPFL checkout is not at the pinned commit")
-    tree = git("ls-tree", "-rz", "--full-tree", UPSTREAM_COMMIT, "--", *PANELS)
+    tree = source_git(path, "ls-tree", "-rz", "--full-tree", UPSTREAM_COMMIT, "--", *PANELS)
     sources = {}
     for entry in tree.split(b"\0")[:-1]:
         stat, raw_name = entry.split(b"\t", 1)
@@ -213,7 +216,7 @@ def load_sources(path: str | Path) -> Iterator[tuple[str, str, Circuit]]:
         raise ValueError("unexpected count of EPFL source files")
 
     for name in sorted(sources):
-        data = git("cat-file", "blob", sources[name])
+        data = source_git(path, "cat-file", "blob", sources[name])
         git_blob = f"blob {len(data)}\0".encode("ascii") + data
         if sha1(git_blob, usedforsecurity=False).hexdigest() != sources[name]:
             raise ValueError(f"{name}: Git blob digest mismatch")

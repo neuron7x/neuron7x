@@ -1,13 +1,11 @@
 """Generate the fixed A01 panel from a pinned upstream worktree."""
 import hashlib
 import json
-import subprocess
 import sys
 from pathlib import Path
 
-from epfl import load_sources
+from epfl import UPSTREAM_COMMIT, load_sources, source_git
 
-UPSTREAM = "82d8cc6910419298e713a46644ed59fd3df53038"
 PROTOCOL = "1d24e98aec1df58814544dcaadd2c672df853612"
 
 
@@ -35,14 +33,8 @@ def generate_case(path, index, circuit):
     }
 
 
-def git(source, *args):
-    return subprocess.check_output(["git", "-C", str(source), *args], text=True)
-
-
 def generate(source):
-    if git(source, "rev-parse", "HEAD").strip() != UPSTREAM:
-        raise ValueError("upstream revision mismatch")
-    if git(source, "status", "--porcelain", "--untracked-files=all"):
+    if source_git(source, "status", "--porcelain", "--untracked-files=all"):
         raise ValueError("upstream worktree differs from the pinned revision")
     sources = [
         {"path": name, "sha256": sha, "cases": [generate_case(name, i, circuit) for i in range(16)]}
@@ -50,7 +42,7 @@ def generate(source):
     ]
     if len(sources) != 20 or len({source["path"] for source in sources}) != 20:
         raise ValueError("incomplete upstream panel")
-    return {"schema": "a01.inputs.v1", "protocol": PROTOCOL, "upstream": UPSTREAM, "sources": sources}
+    return {"schema": "a01.inputs.v1", "protocol": PROTOCOL, "upstream": UPSTREAM_COMMIT, "sources": sources}
 
 
 if __name__ == "__main__":

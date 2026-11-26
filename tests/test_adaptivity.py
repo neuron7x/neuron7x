@@ -1,7 +1,11 @@
+import os
+import subprocess
 import sys
+import tempfile
 import unittest
 from itertools import product
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "research" / "adaptivity"))
 import decide
@@ -45,6 +49,14 @@ b
                 e = stuck("e", 0)
                 reference.append(f"{q}{a | b}{int((z, c, e) != (0, 1, 1))}{a}")
             self.assertEqual(circuit.simulate((a, b), faults), tuple(reference))
+
+    def test_source_git_does_not_inherit_git_directory_or_object_overrides(self):
+        with tempfile.TemporaryDirectory() as directory:
+            subprocess.run(["git", "init", "-q", directory], check=True)
+            with patch.dict(os.environ, {"GIT_DIR": "/nonexistent-a01-git-dir",
+                                         "GIT_OBJECT_DIRECTORY": "/nonexistent-a01-objects"}):
+                self.assertEqual(epfl.source_git(directory, "rev-parse", "--is-inside-work-tree"),
+                                 b"true\n")
 
     def test_malformed_blif_blocks_simulation(self):
         header = ".model x\n.inputs a\n.outputs y\n"
