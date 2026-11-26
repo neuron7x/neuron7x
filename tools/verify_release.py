@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import io
+import json
 import os
 import re
 import subprocess
@@ -103,7 +104,8 @@ def require_committed_verifier(checkout: Path) -> str:
     return hashlib.sha256(archived.read_bytes()).hexdigest()
 
 
-def require(
+def run_check(
+    results: list[dict],
     name: str,
     command: list[str],
     directory: Path,
@@ -111,25 +113,45 @@ def require(
     predicate: Callable[[subprocess.CompletedProcess[str]], bool],
 ) -> None:
     print(f"RUN {name}", flush=True)
+    record = {"name": name, "kind": "check" if status == 0 else "negative-control",
+              "expected_exit": status, "actual_exit": None, "status": "FAIL"}
+    results.append(record)
     result = execute(command, directory)
+    record["actual_exit"] = result.returncode
     if result.returncode != status or not predicate(result):
         details = "\n".join(part.strip() for part in (result.stderr, result.stdout) if part.strip())
         raise VerificationError(
             f"{name}: expected exit {status} and its diagnostic, got exit {result.returncode}"
             + (f"\n{details}" if details else "")
         )
+    record["status"] = "PASS"
     print(f"PASS {name} (exit {status})", flush=True)
 
 
 def node_suite(result: subprocess.CompletedProcess[str]) -> bool:
-    count = re.search(r"^# tests ([1-9][0-9]*)$", result.stdout, re.MULTILINE)
-    return count is not None and f"# pass {count[1]}" in result.stdout.splitlines()
+    output = result.stdout
+    summary = re.search(
+        r"^1\.\.([1-9]\d*)\n# tests ([1-9]\d*)\n# suites \d+\n# pass ([1-9]\d*)\n"
+        r"# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms \d+(?:\.\d+)?\n?\Z",
+        output, re.MULTILINE,
+    )
+    if summary is None or not output.startswith("TAP version 13\n") or summary[2] != summary[3]:
+        return False
+    if len(re.findall(r"^# tests ", output, re.MULTILINE)) != 1:
+        return False
+    body = output[:summary.start()]
+    if re.search(r"^[ \t]*not ok\b", body, re.MULTILINE):
+        return False
+    top = re.findall(r"^ok ([1-9]\d*) - ", body, re.MULTILINE)
+    return str(len(top)) == summary[1] and all(number == str(index) for index, number in enumerate(top, 1))
 
 
 def python_suite(result: subprocess.CompletedProcess[str]) -> bool:
+    summary = result.stderr
     return (
-        re.search(r"^Ran [1-9][0-9]* tests? in ", result.stderr, re.MULTILINE) is not None
-        and result.stderr.rstrip().endswith("\nOK")
+        len(re.findall(r"^Ran ", summary, re.MULTILINE)) == 1
+        and re.search(r"^-{70}\nRan [1-9]\d* tests? in \d+(?:\.\d+)?s\n\nOK\n?\Z", summary, re.MULTILINE)
+        is not None
     )
 
 
@@ -162,7 +184,10 @@ def grant_causal_authority(content: bytes) -> bytes:
     return altered
 
 
-def verify(root: Path) -> None:
+def verify(root: Path, results: list[dict]) -> None:
+    def require(name, command, directory, status, predicate):
+        run_check(results, name, command, directory, status, predicate)
+
     node = ["node", "--test", "--test-reporter=tap"]
     python = [sys.executable, "-B"]
     traces = ["node", "tools/run_inference.mjs", "--check"]
@@ -314,6 +339,9 @@ def verify(root: Path) -> None:
         ("Archive index rejects hidden tracked files", "tools/verify_release.py",
          b"if pending:", b"if False:", "test_verify_release.py",
          "test_archive_rejects_tracked_file_hidden_by_local_attributes", "VerificationError not raised"),
+        ("Source verification rejects a modified raw commit", "tools/verify_sources.py",
+         b"if hashlib.sha1(git_bytes, usedforsecurity=False).hexdigest() != commit:", b"if False:",
+         "test_verify_sources.py", "test_raw_commit_is_bound_to_its_root_tree_bytes", "SourceError not raised"),
         ("Release entrypoint rejects a stale verifier", "tools/verify_release.py",
          b"if not archived.is_file() or archived.read_bytes() != Path(__file__).resolve().read_bytes():",
          b"if not archived.is_file():", "test_verify_release.py",
@@ -330,33 +358,71 @@ def verify(root: Path) -> None:
         mutate(root, source_path, lambda source: source.replace(original, altered, 1), reject_failed_proof)
 
 
+def write_report(destination: Path, report: dict) -> None:
+    data = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True).encode("utf-8") + b"\n"
+    with tempfile.NamedTemporaryFile(dir=destination.parent, prefix=".verification-", delete=False) as temp:
+        pending = Path(temp.name)
+        try:
+            temp.write(data)
+            temp.close()
+            os.replace(pending, destination)
+        finally:
+            pending.unlink(missing_ok=True)
+    print(f"REPORT_SHA256 {hashlib.sha256(data).hexdigest()}", flush=True)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("ref", nargs="?", default="HEAD", help="local Git commit or ref")
+    parser.add_argument("--report", type=Path, help="write a machine-readable verification report")
     args = parser.parse_args()
+    report = {
+        "schema": "neuron7x.release-verification.v1",
+        "status": "FAIL", "failed_stage": "resolve-commit",
+        "commit": None, "tree": None, "tracked_blobs_verified": None, "verifier_sha256": None,
+        "checks": [],
+    }
     try:
         resolved = execute(["git", "rev-parse", "--verify", "--end-of-options",
                             f"{args.ref}^{{commit}}"], ROOT)
         commit = resolved.stdout.strip()
         if resolved.returncode != 0 or not re.fullmatch(r"(?:[a-f0-9]{40}|[a-f0-9]{64})", commit):
             raise VerificationError(f"Cannot resolve a local Git commit: {args.ref}")
+        report.update(commit=commit, failed_stage="resolve-tree")
         tree = execute(["git", "rev-parse", "--verify", f"{commit}^{{tree}}"], ROOT)
         if tree.returncode != 0 or not re.fullmatch(r"(?:[a-f0-9]{40}|[a-f0-9]{64})", tree.stdout.strip()):
             raise VerificationError(f"Cannot resolve Git tree for {commit}")
+        report.update(tree=tree.stdout.strip(), failed_stage="archive")
         print(f"COMMIT {commit}", flush=True)
-        print(f"TREE {tree.stdout.strip()}", flush=True)
+        print(f"TREE {report['tree']}", flush=True)
         with tempfile.TemporaryDirectory(prefix="verify-release-") as temporary:
             checkout = Path(temporary).resolve()
             count = extract_commit(commit, checkout)
+            report.update(tracked_blobs_verified=count, failed_stage="verifier")
             print(f"TRACKED_BLOBS_VERIFIED {count}", flush=True)
             verifier = require_committed_verifier(checkout)
+            report.update(verifier_sha256=verifier, failed_stage="checks")
             print(f"VERIFIER_SHA256 {verifier}", flush=True)
-            verify(checkout)
+            verify(checkout, report["checks"])
+        report.update(status="PASS", failed_stage=None)
     except (VerificationError, OSError, subprocess.SubprocessError, tarfile.TarError) as error:
         print(f"VERIFY_RELEASE_FAILED: {error}", file=sys.stderr)
-        return 1
-    print("RELEASE_VERIFICATION_PASS")
-    return 0
+
+    controls = [check for check in report["checks"] if check["kind"] == "negative-control"]
+    report["negative_controls"] = {
+        "passed": sum(check["status"] == "PASS" for check in controls),
+        "failed": sum(check["status"] == "FAIL" for check in controls),
+    }
+    if args.report is not None:
+        try:
+            write_report(args.report, report)
+        except OSError as error:
+            print(f"VERIFY_RELEASE_FAILED: cannot write report: {error}", file=sys.stderr)
+            return 1
+    if report["status"] == "PASS":
+        print("RELEASE_VERIFICATION_PASS")
+        return 0
+    return 1
 
 
 if __name__ == "__main__":
