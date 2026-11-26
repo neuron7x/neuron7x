@@ -144,3 +144,22 @@ class WideMenuPolicy(unittest.TestCase):
 
         saved, _ = sealed(STUDY / "evidence", "budgeted_wider.json")
         self.assertEqual(json.loads(json.dumps(run())), saved)
+
+
+class ActSignature(unittest.TestCase):
+    def test_delegated_signature_binds_acts_and_rejects_changed_manifest(self):
+        import hashlib
+        import subprocess
+
+        evidence = STUDY / "evidence"
+        manifest = (evidence / "ACTS.sha256").read_bytes()
+        command = ["ssh-keygen", "-Y", "verify", "-f", str(evidence / "allowed_signers"),
+                   "-I", "neuron7x", "-n", "neuron7x.research.v1", "-s",
+                   str(evidence / "ACTS.sha256.sig")]
+        for payload, expected in ((manifest, True), (manifest + b"\n", False)):
+            result = subprocess.run(command, input=payload, capture_output=True, timeout=10)
+            self.assertEqual(result.returncode == 0, expected)
+        for line in manifest.decode("ascii").splitlines():
+            expected, path = line.split("  ")
+            self.assertEqual(hashlib.sha256((STUDY / path).read_bytes()).hexdigest(),
+                             expected, path)
