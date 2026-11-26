@@ -144,6 +144,12 @@ test("receipt commands bind and verify real case files", t => {
   assert.equal(created.status, 0, created.stderr);
   writeFileSync(path, created.stdout);
   assert.equal(run("--verify-receipt", prior, path).status, 0);
+  const anchor = JSON.parse(created.stdout).receipt_sha256;
+  assert.equal(run("--verify-anchored-receipt", prior, path, anchor).status, 0);
+  const wrongAnchor = run("--verify-anchored-receipt", prior, path, "0".repeat(64));
+  assert.equal(wrongAnchor.status, 1);
+  assert.equal(wrongAnchor.stdout, "");
+  assert.match(wrongAnchor.stderr, /RECEIPT_ANCHOR_MISMATCH/);
   const advanced = run("--advance-receipt", prior, path, current);
   assert.equal(advanced.status, 0, advanced.stderr);
   assert.equal(JSON.parse(advanced.stdout).result.next_intervention, "C");
@@ -173,4 +179,15 @@ test("receipt continuation keeps the forecast when rolling inference would chang
   assert.equal(verified.result.next_intervention, "D");
   assert.throws(() => advanceReceipt(first, add(first, "A", "0"), atlas, verified), /RECEIPT_PLAN_MISMATCH/);
   assert.doesNotThrow(() => verifyReceipt(first, atlas, verified));
+});
+
+test("external receipt digest rejects a valid replacement case and receipt together", () => {
+  const input = fixture("adaptive_categorical");
+  const known = createReceipt(input, atlas);
+  const replacement = { ...input, budget: input.budget + 1 };
+  const selfConsistent = createReceipt(replacement, atlas);
+  assert.deepEqual(verifyReceipt(replacement, atlas, selfConsistent), selfConsistent);
+  assert.deepEqual(verifyReceipt(input, atlas, known, known.receipt_sha256), known);
+  assert.throws(() => verifyReceipt(replacement, atlas, selfConsistent, known.receipt_sha256), /RECEIPT_ANCHOR_MISMATCH/);
+  assert.throws(() => verifyReceipt(input, atlas, known, "invalid"), /INVALID_RECEIPT_ANCHOR/);
 });

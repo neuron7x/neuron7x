@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { EXACT_CLASS_TWO_STEP, EXACT_TWO_STEP, infer, validate } from "./kernel.mjs";
 
 const SCHEMA = "neuron7x.inference-receipt.v1";
+const RECEIPT_HASH = /^[0-9a-f]{64}$/;
 
 // Canonical representation for this version: sort object keys, preserve array order.
 function canonical(value) {
@@ -113,10 +114,14 @@ export function createReceipt(input, atlas, policy = EXACT_TWO_STEP) {
   return receiptAt(input, atlas, policy, input.observations.length);
 }
 
-export function verifyReceipt(input, atlas, receipt) {
+export function verifyReceipt(input, atlas, receipt, expectedDigest) {
   if (!receipt || receipt.schema !== SCHEMA) throw Error("INVALID_RECEIPT");
   const replay = receiptAt(input, atlas, receipt.policy, receipt.start_records);
   if (canonical(replay) !== canonical(receipt)) throw Error("RECEIPT_MISMATCH");
+  if (expectedDigest !== undefined) {
+    if (typeof expectedDigest !== "string" || !RECEIPT_HASH.test(expectedDigest)) throw Error("INVALID_RECEIPT_ANCHOR");
+    if (replay.receipt_sha256 !== expectedDigest) throw Error("RECEIPT_ANCHOR_MISMATCH");
+  }
   return replay;
 }
 

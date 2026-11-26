@@ -48,19 +48,19 @@ function main(argv) {
   const [flag, ...paths] = argv;
   const arities = new Map([
     ["--check", 0], ["--exact-two-step", 1], ["--exact-class-two-step", 1],
-    ["--receipt", 1], ["--receipt-class", 1], ["--verify-receipt", 2], ["--advance-receipt", 3],
+    ["--receipt", 1], ["--receipt-class", 1], ["--verify-receipt", 2], ["--verify-anchored-receipt", 3], ["--advance-receipt", 3],
   ]);
   const ordinary = argv.length === 1 && !flag.startsWith("-");
   if (!ordinary && (arities.get(flag) !== paths.length || paths.some(path => path.startsWith("-")))) {
-    console.error("Usage: node tools/run_inference.mjs --check | [--exact-two-step|--exact-class-two-step|--receipt|--receipt-class] <case.json> | --verify-receipt <case.json> <receipt.json> | --advance-receipt <prior-case.json> <receipt.json> <new-case.json>");
+    console.error("Usage: node tools/run_inference.mjs --check | [--exact-two-step|--exact-class-two-step|--receipt|--receipt-class] <case.json> | --verify-receipt <case.json> <receipt.json> | --verify-anchored-receipt <case.json> <receipt.json> <trusted-sha256> | --advance-receipt <prior-case.json> <receipt.json> <new-case.json>");
     return 2;
   }
 
   const atlas = readJson(join(root, "research/atlas.json"), ATLAS_BYTES);
   if (ordinary) return print(infer(input(flag), atlas));
   if (flag === "--check") return check(atlas);
-  if (flag === "--verify-receipt") {
-    verifyReceipt(input(paths[0]), atlas, input(paths[1]));
+  if (flag === "--verify-receipt" || flag === "--verify-anchored-receipt") {
+    verifyReceipt(input(paths[0]), atlas, input(paths[1]), paths[2]);
     return print({ status: "RECEIPT_VERIFIED" });
   }
   if (flag === "--advance-receipt") {
