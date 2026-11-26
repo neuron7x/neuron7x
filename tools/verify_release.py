@@ -180,6 +180,45 @@ def verify(root: Path) -> None:
                                          b"declaration_sha256: digest({})"),
            reject_detached_declaration)
 
+    anchor_test = "external receipt digest rejects a valid replacement case and receipt together"
+
+    def reject_detached_anchor() -> None:
+        command = [*node, f"--test-name-pattern=^{anchor_test}$", "tests/inference_receipt.test.mjs"]
+        require("Anchored verification rejects a substituted case and receipt", command, root, 1, lambda result: (
+            re.search(rf"^not ok [0-9]+ - {anchor_test}$", result.stdout, re.MULTILINE) is not None
+            and "ERR_ASSERTION" in result.stdout
+            and "Missing expected exception" in result.stdout
+        ))
+
+    mutate(root, "inference/receipt.mjs",
+           lambda source: source.replace(b"replay.receipt_sha256 !== expectedDigest", b"false"),
+           reject_detached_anchor)
+
+    forecast_test = "forecast scores agree with executable terminal outcomes and total action uses"
+
+    def reject_inflated_forecast() -> None:
+        command = [*node, f"--test-name-pattern=^{forecast_test}$", "tests/inference_receipt.test.mjs"]
+        require("Receipt detects inflated selection forecasts", command, root, 1, lambda result: (
+            re.search(rf"^not ok [0-9]+ - {forecast_test}$", result.stdout, re.MULTILINE) is not None
+            and "INVALID_INFERENCE_FORECAST" in result.stdout
+        ))
+
+    mutate(root, "inference/kernel.mjs",
+           lambda source: source.replace(b"selected_models:plan.selections", b"selected_models:plan.selections+1"),
+           reject_inflated_forecast)
+
+    def reject_symlink_admission() -> None:
+        require("Git tree verifier rejects a symbolic link", [*python, "-m", "unittest", "discover", "-s", "tests"],
+                root, 1, lambda result: (
+                    "FAIL: test_commit_tree_requires_regular_leaf_before_content_is_requested" in result.stderr
+                    and "label='symlink'" in result.stderr
+                    and "ValueError not raised" in result.stderr
+                ))
+
+    mutate(root, "tools/render_research_atlas.py",
+           lambda source: source.replace(b'{"100644", "100755"}', b'{"100644", "100755", "120000"}'),
+           reject_symlink_admission)
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -191,7 +230,11 @@ def main() -> int:
         commit = resolved.stdout.strip()
         if resolved.returncode != 0 or not re.fullmatch(r"(?:[a-f0-9]{40}|[a-f0-9]{64})", commit):
             raise VerificationError(f"Cannot resolve a local Git commit: {args.ref}")
+        tree = execute(["git", "rev-parse", "--verify", f"{commit}^{{tree}}"], ROOT)
+        if tree.returncode != 0 or not re.fullmatch(r"(?:[a-f0-9]{40}|[a-f0-9]{64})", tree.stdout.strip()):
+            raise VerificationError(f"Cannot resolve Git tree for {commit}")
         print(f"COMMIT {commit}", flush=True)
+        print(f"TREE {tree.stdout.strip()}", flush=True)
         with tempfile.TemporaryDirectory(prefix="verify-release-") as temporary:
             checkout = Path(temporary).resolve()
             extract_commit(commit, checkout)

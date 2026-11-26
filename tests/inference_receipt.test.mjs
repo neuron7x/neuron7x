@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { EXACT_CLASS_TWO_STEP, EXACT_TWO_STEP, infer } from "../inference/kernel.mjs";
-import { advanceReceipt, createReceipt, verifyReceipt } from "../inference/receipt.mjs";
+import { advanceReceipt, createReceipt, verifyReceipt, verifyTransition } from "../inference/receipt.mjs";
 
 const read = name => JSON.parse(readFileSync(new URL("../" + name, import.meta.url), "utf8"));
 const atlas = read("research/atlas.json");
@@ -144,9 +144,20 @@ test("receipt commands bind and verify real case files", t => {
   assert.equal(created.status, 0, created.stderr);
   writeFileSync(path, created.stdout);
   assert.equal(run("--verify-receipt", prior, path).status, 0);
+  const anchor = JSON.parse(created.stdout).receipt_sha256;
+  assert.equal(run("--verify-anchored-receipt", prior, path, anchor).status, 0);
+  const wrongAnchor = run("--verify-anchored-receipt", prior, path, "0".repeat(64));
+  assert.equal(wrongAnchor.status, 1);
+  assert.equal(wrongAnchor.stdout, "");
+  assert.match(wrongAnchor.stderr, /RECEIPT_ANCHOR_MISMATCH/);
   const advanced = run("--advance-receipt", prior, path, current);
   assert.equal(advanced.status, 0, advanced.stderr);
   assert.equal(JSON.parse(advanced.stdout).result.next_intervention, "C");
+  const nextReceipt = join(dir, "next.json");
+  writeFileSync(nextReceipt, advanced.stdout);
+  const transition = run("--verify-transition", prior, path, current, nextReceipt, anchor);
+  assert.equal(transition.status, 0, transition.stderr);
+  assert.equal(JSON.parse(transition.stdout).status, "TRANSITION_VERIFIED");
   const stale = run("--verify-receipt", current, path);
   assert.equal(stale.status, 1);
   assert.equal(stale.stdout, "");
@@ -173,4 +184,67 @@ test("receipt continuation keeps the forecast when rolling inference would chang
   assert.equal(verified.result.next_intervention, "D");
   assert.throws(() => advanceReceipt(first, add(first, "A", "0"), atlas, verified), /RECEIPT_PLAN_MISMATCH/);
   assert.doesNotThrow(() => verifyReceipt(first, atlas, verified));
+});
+
+test("external receipt digest rejects a valid replacement case and receipt together", () => {
+  const input = fixture("adaptive_categorical");
+  const known = createReceipt(input, atlas);
+  const replacement = { ...input, budget: input.budget + 1 };
+  const selfConsistent = createReceipt(replacement, atlas);
+  assert.deepEqual(verifyReceipt(replacement, atlas, selfConsistent), selfConsistent);
+  assert.deepEqual(verifyReceipt(input, atlas, known, known.receipt_sha256), known);
+  assert.throws(() => verifyReceipt(replacement, atlas, selfConsistent, known.receipt_sha256), /RECEIPT_ANCHOR_MISMATCH/);
+  assert.throws(() => verifyReceipt(input, atlas, known, "invalid"), /INVALID_RECEIPT_ANCHOR/);
+});
+
+test("receipt boundaries reject live properties without executing getters or proxy traps", () => {
+  const input = fixture("adaptive_categorical");
+  const genuine = createReceipt(input, atlas);
+  const changed = add({ ...input, case_id: "other_case" }, "A", "1");
+  const disguised = structuredClone(genuine);
+  let reads = 0;
+  Object.defineProperty(disguised, "declaration_sha256", {
+    enumerable: true,
+    get() { reads++; return genuine.declaration_sha256; },
+  });
+  assert.throws(() => verifyReceipt(input, atlas, disguised), /INVALID_RECEIPT_VALUE/);
+  assert.throws(() => advanceReceipt(input, changed, atlas, disguised), /INVALID_RECEIPT_VALUE/);
+  const proxy = new Proxy(input, { ownKeys() { reads++; return Reflect.ownKeys(input); } });
+  assert.throws(() => createReceipt(proxy, atlas), /INVALID_RECEIPT_VALUE/);
+  assert.equal(reads, 0);
+  const cycle = { ...genuine };
+  cycle.loop = cycle;
+  assert.throws(() => verifyReceipt(input, atlas, cycle), /INVALID_RECEIPT_VALUE/);
+});
+
+test("transition verification rejects a rerooted receipt and a mismatched sibling", () => {
+  const input = fixture("adaptive_categorical");
+  const root = createReceipt(input, atlas);
+  const left = add(input, "A", "0");
+  const right = add(input, "A", "1");
+  const leftReceipt = advanceReceipt(input, left, atlas, root);
+  const rightReceipt = advanceReceipt(input, right, atlas, root);
+  assert.deepEqual(verifyTransition(input, right, atlas, root, rightReceipt, root.receipt_sha256), rightReceipt);
+  assert.deepEqual(verifyTransition(input, left, atlas, root, leftReceipt, root.receipt_sha256), leftReceipt);
+
+  const rerooted = createReceipt(right, atlas);
+  assert.deepEqual(verifyReceipt(right, atlas, rerooted), rerooted);
+  assert.throws(() => verifyTransition(input, right, atlas, root, rerooted, root.receipt_sha256), /RECEIPT_TRANSITION_MISMATCH/);
+  assert.throws(() => verifyTransition(input, right, atlas, root, leftReceipt, root.receipt_sha256), /RECEIPT_TRANSITION_MISMATCH/);
+  assert.throws(() => verifyTransition(input, right, atlas, root, rightReceipt), /INVALID_RECEIPT_ANCHOR/);
+  assert.throws(() => verifyTransition(input, right, atlas, root, rightReceipt, leftReceipt.receipt_sha256), /RECEIPT_ANCHOR_MISMATCH/);
+});
+
+test("forecast scores agree with executable terminal outcomes and total action uses", () => {
+  const input = fixture("adaptive_categorical");
+  for (const policy of [EXACT_TWO_STEP, EXACT_CLASS_TWO_STEP]) {
+    const root = createReceipt(input, atlas, policy);
+    assert.equal(root.forecast.first, "A");
+    assert.equal(root.result.intervention_plan.intervention_uses, 10);
+    assert.equal(root.result.intervention_plan.selected_models ?? root.result.intervention_plan.selected_classes, 5);
+    const terminal = createReceipt(fixture("interventional_split"), atlas, policy);
+    assert.equal(terminal.forecast.first, null);
+    assert.equal(terminal.result.intervention_plan.intervention_uses, 0);
+    assert.equal(terminal.result.intervention_plan.selected_models ?? terminal.result.intervention_plan.selected_classes, 1);
+  }
 });

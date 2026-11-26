@@ -1,33 +1,59 @@
 import { createHash } from "node:crypto";
+import { types } from "node:util";
 import { EXACT_CLASS_TWO_STEP, EXACT_TWO_STEP, infer, validate } from "./kernel.mjs";
 
 const SCHEMA = "neuron7x.inference-receipt.v1";
+const RECEIPT_HASH = /^[0-9a-f]{64}$/;
 
 // Canonical representation for this version: sort object keys, preserve array order.
-function canonical(value) {
+function canonical(value, depth = 0) {
+  if (depth > 64 || types.isProxy(value)) throw Error("INVALID_RECEIPT_VALUE");
   if (value === null || typeof value === "string" || typeof value === "boolean" || Number.isFinite(value)) {
     return JSON.stringify(value);
   }
-  if (Array.isArray(value)) {
-    if (Object.keys(value).length !== value.length) throw Error("INVALID_RECEIPT_VALUE");
-    const elements = [];
-    for (let index = 0; index < value.length; index++) {
-      if (!Object.hasOwn(value, index)) throw Error("INVALID_RECEIPT_VALUE");
-      elements.push(canonical(value[index]));
-    }
-    return "[" + elements.join(",") + "]";
-  }
-  if (typeof value !== "object" || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) {
+  if (typeof value !== "object") throw Error("INVALID_RECEIPT_VALUE");
+  const array = Array.isArray(value);
+  if (!array && ![Object.prototype, null].includes(Object.getPrototypeOf(value))) {
     throw Error("INVALID_RECEIPT_VALUE");
   }
-  return "{" + Object.keys(value).sort().map(key => JSON.stringify(key) + ":" + canonical(value[key])).join(",") + "}";
+  const descriptors = Object.getOwnPropertyDescriptors(value);
+  const keys = Reflect.ownKeys(descriptors).filter(key => !(array && key === "length"));
+  if (array && keys.length !== value.length) throw Error("INVALID_RECEIPT_VALUE");
+  if (keys.some(key => typeof key !== "string")) throw Error("INVALID_RECEIPT_VALUE");
+
+  const names = array ? Array.from({ length: value.length }, (_, index) => String(index)) : keys.sort();
+  const encoded = names.map(key => {
+    if (!Object.hasOwn(descriptors, key)) throw Error("INVALID_RECEIPT_VALUE");
+    const property = descriptors[key];
+    if (!property.enumerable || !Object.hasOwn(property, "value")) throw Error("INVALID_RECEIPT_VALUE");
+    const entry = canonical(property.value, depth + 1);
+    return array ? entry : JSON.stringify(key) + ":" + entry;
+  }).join(",");
+  return array ? "[" + encoded + "]" : "{" + encoded + "}";
 }
 
+const snapshot = value => JSON.parse(canonical(value));
 const digest = value => createHash("sha256").update(canonical(value), "utf8").digest("hex");
 
 function declaration(input) {
   const { observations, ...declared } = input;
   return declared;
+}
+
+function distinctBehaviors(models, columns) {
+  const representatives = [];
+  for (const model of models) {
+    if (!representatives.some(other => columns.every(id => other.predictions[id] === model.predictions[id]))) {
+      representatives.push(model);
+    }
+  }
+  return representatives;
+}
+
+function targets(input, survivors, policy) {
+  return policy === EXACT_CLASS_TWO_STEP
+    ? distinctBehaviors(survivors, input.experiments.map(entry => entry.id))
+    : survivors;
 }
 
 function observedEvidence(input, result, policy) {
@@ -44,8 +70,7 @@ function observedEvidence(input, result, policy) {
   const witness = input.observations.findIndex(obs => active.has(obs.experiment)
     && models.some(model => model.predictions[obs.experiment] !== obs.outcome));
   const ids = survivors.map(model => model.id);
-  const alternatives = new Set(survivors.map(model => JSON.stringify(input.experiments.map(entry => model.predictions[entry.id]))));
-  const eligible = policy === EXACT_CLASS_TWO_STEP ? alternatives.size === 1 : survivors.length === 1;
+  const eligible = targets(input, survivors, policy).length === 1;
   const selection = policy === EXACT_CLASS_TWO_STEP ? "CONDITIONAL_BEHAVIOR_CLASS_SELECTION" : "CONDITIONAL_MODEL_SELECTION";
   const verdict = ids.length === 0 ? "MODEL_CLASS_REFUTED" : eligible && witness >= 0 ? selection : "ABSTAIN";
   if (result.verdict !== verdict || canonical(result.survivors) !== canonical(ids)
@@ -74,6 +99,45 @@ function forecast(input, atlas, policy, initial) {
   return { first: next, branches };
 }
 
+// Score the returned plan from raw predictions and records, without calling infer.
+function verifyForecast(input, policy, result, plan, budget = input.budget) {
+  const active = new Set(input.experiments.filter(entry => entry.kind === "intervention").map(entry => entry.id));
+  const alreadyUsed = new Set(input.observations.map(obs => obs.experiment));
+  const available = [...active].filter(action => !alreadyUsed.has(action)).length;
+  const horizon = Math.min(2, budget - input.observations.length, available);
+  if (result.intervention_plan.horizon !== horizon) throw Error("INVALID_INFERENCE_FORECAST");
+  const fits = (model, records) => records.every(obs => model.predictions[obs.experiment] === obs.outcome);
+  const viable = input.models.filter(model => fits(model, input.observations));
+  let selected = 0;
+  let uses = 0;
+  for (const model of targets(input, viable, policy)) {
+    const records = [...input.observations];
+    function record(action) {
+      if (!active.has(action) || alreadyUsed.has(action) || records.some(obs => obs.experiment === action)
+        || records.length - input.observations.length >= result.intervention_plan.horizon) {
+        throw Error("INVALID_INFERENCE_FORECAST");
+      }
+      records.push({ experiment: action, outcome: model.predictions[action] });
+      uses++;
+    }
+    if (plan.first !== null) {
+      record(plan.first);
+      const second = plan.branches.find(branch => branch.outcome === model.predictions[plan.first])?.next;
+      if (second != null) record(second);
+    }
+    const survivors = input.models.filter(candidate => fits(candidate, records));
+    const witness = records.some(obs => active.has(obs.experiment)
+      && input.models.some(candidate => candidate.predictions[obs.experiment] !== obs.outcome));
+    if (witness && targets(input, survivors, policy).length === 1) selected++;
+  }
+  const advertised = policy === EXACT_CLASS_TWO_STEP
+    ? result.intervention_plan.selected_classes
+    : result.intervention_plan.selected_models;
+  if (advertised !== selected || result.intervention_plan.intervention_uses !== uses) {
+    throw Error("INVALID_INFERENCE_FORECAST");
+  }
+}
+
 function receiptAt(input, atlas, policy, start) {
   if (policy !== EXACT_TWO_STEP && policy !== EXACT_CLASS_TWO_STEP) throw Error("INVALID_RECEIPT_POLICY");
   validate(input);
@@ -84,6 +148,8 @@ function receiptAt(input, atlas, policy, start) {
   if (result.source_status !== "PINNED_REFERENCE_ONLY") throw Error("RECEIPT_SOURCE_MISMATCH");
   const budget = start + result.intervention_plan.horizon;
   const plan = forecast(initial, atlas, policy, result);
+  observedEvidence(initial, result, policy);
+  verifyForecast(initial, policy, result, plan);
   let next = plan.first;
   for (let index = start; index < input.observations.length; index++) {
     const event = input.observations[index];
@@ -91,6 +157,10 @@ function receiptAt(input, atlas, policy, start) {
     next = index === start ? plan.branches.find(branch => branch.outcome === event.outcome)?.next ?? null : null;
     result = infer({ ...input, budget, observations: input.observations.slice(0, index + 1) }, atlas, policy);
     if (result.next_intervention !== next) throw Error("RECEIPT_PLAN_MISMATCH");
+  }
+
+  if (input.observations.length > start) {
+    verifyForecast(input, policy, result, { first: next, branches: [] }, budget);
   }
 
   const body = {
@@ -109,25 +179,44 @@ function receiptAt(input, atlas, policy, start) {
 }
 
 export function createReceipt(input, atlas, policy = EXACT_TWO_STEP) {
-  validate(input);
-  return receiptAt(input, atlas, policy, input.observations.length);
+  const data = snapshot(input);
+  validate(data);
+  return receiptAt(data, snapshot(atlas), policy, data.observations.length);
 }
 
-export function verifyReceipt(input, atlas, receipt) {
+function replayReceipt(input, atlas, receipt, expectedDigest) {
   if (!receipt || receipt.schema !== SCHEMA) throw Error("INVALID_RECEIPT");
   const replay = receiptAt(input, atlas, receipt.policy, receipt.start_records);
   if (canonical(replay) !== canonical(receipt)) throw Error("RECEIPT_MISMATCH");
+  if (expectedDigest !== undefined) {
+    if (typeof expectedDigest !== "string" || !RECEIPT_HASH.test(expectedDigest)) throw Error("INVALID_RECEIPT_ANCHOR");
+    if (replay.receipt_sha256 !== expectedDigest) throw Error("RECEIPT_ANCHOR_MISMATCH");
+  }
   return replay;
 }
 
-export function advanceReceipt(previous, current, atlas, receipt) {
-  verifyReceipt(previous, atlas, receipt);
-  validate(current);
-  const length = previous.observations.length;
-  if (digest(declaration(current)) !== receipt.declaration_sha256
-    || current.observations.length !== length + 1
-    || digest(current.observations.slice(0, length)) !== receipt.records_sha256) {
+export function verifyReceipt(input, atlas, receipt, expectedDigest) {
+  return replayReceipt(snapshot(input), snapshot(atlas), snapshot(receipt), expectedDigest);
+}
+
+export function advanceReceipt(previous, current, atlas, receipt, expectedDigest) {
+  const prior = snapshot(previous);
+  const data = snapshot(current);
+  const pins = snapshot(atlas);
+  const trusted = replayReceipt(prior, pins, snapshot(receipt), expectedDigest);
+  validate(data);
+  const length = prior.observations.length;
+  if (digest(declaration(data)) !== trusted.declaration_sha256
+    || data.observations.length !== length + 1
+    || digest(data.observations.slice(0, length)) !== trusted.records_sha256) {
     throw Error("RECEIPT_HISTORY_MISMATCH");
   }
-  return receiptAt(current, atlas, receipt.policy, receipt.start_records);
+  return receiptAt(data, pins, trusted.policy, trusted.start_records);
+}
+
+export function verifyTransition(previous, current, atlas, priorReceipt, nextReceipt, priorDigest) {
+  if (priorDigest === undefined) throw Error("INVALID_RECEIPT_ANCHOR");
+  const expected = advanceReceipt(previous, current, atlas, priorReceipt, priorDigest);
+  if (canonical(expected) !== canonical(nextReceipt)) throw Error("RECEIPT_TRANSITION_MISMATCH");
+  return expected;
 }
