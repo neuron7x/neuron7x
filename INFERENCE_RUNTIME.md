@@ -34,7 +34,7 @@ Use `--exact-class-two-step` to give one vote to each distinct complete predicti
 
 A receipt binds the declarations, ordered observation list, atlas, policy, forecast, verdict and evidence to SHA-256. Canonical inputs use UTF-8 JSON with sorted object keys and array order preserved. The evidence lists a record index and conflicting prediction for each excluded model. A selection includes the index of a recorded discriminating intervention. The forecast lists the next action for each modeled answer to the first intervention. An unmodeled answer may refute the class.
 
-`--advance-receipt` verifies the previous receipt, requires exactly one appended observation for the prescribed action and keeps the original horizon. An independent `--receipt` call starts a new forecast and may select a different intervention from the committed continuation. Keep the original receipt or its digest separately if you need to detect replacement of the entire case and receipt together. Verification replays the supplied evidence and assumes that the caller has authenticated the records and atlas.
+`--advance-receipt` verifies the previous receipt, requires exactly one appended observation for the prescribed action and keeps the original horizon. An independent `--receipt` call starts a new forecast and may select a different intervention from the committed continuation. Keep the original receipt or its digest separately if you need to detect replacement of the entire case and receipt together. Verification replays the supplied evidence and assumes that the caller has authenticated the records and atlas. It independently replays every modeled path of the emitted plan to check its selection and action counts. The finite planning oracle remains the independent test of optimality.
 
 ```sh
 node tools/run_inference.mjs --receipt inference/cases/adaptive_categorical.json > receipt.json
@@ -43,6 +43,10 @@ node tools/run_inference.mjs --advance-receipt prior-case.json receipt.json next
 ```
 
 The first two commands use the same case. For the third, `prior-case.json` is the case underlying the receipt and `next-case.json` appends its recommended intervention and observed outcome. Use `--receipt-class` to start a class-based receipt.
+
+- `--verify-anchored-receipt <case.json> <receipt.json> <trusted-sha256>` checks the regenerated receipt against an independently retained digest. This catches replacement of both files.
+- `--verify-transition <prior-case.json> <prior-receipt.json> <new-case.json> <new-receipt.json> <trusted-prior-sha256>` authenticates the committed prefix against its anchor and verifies one successor. Several observed outcomes can produce valid successors. An independently retained successor digest distinguishes them.
+- The JavaScript receipt API snapshots pure JSON values before replay. Accessors, proxies, sparse arrays and non-JSON values are rejected.
 
 ## Input and replay
 
