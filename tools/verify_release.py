@@ -143,7 +143,7 @@ def node_suite(result: subprocess.CompletedProcess[str]) -> bool:
     if re.search(r"^[ \t]*not ok\b", body, re.MULTILINE):
         return False
     outcomes = re.findall(r"^[ \t]*ok [1-9]\d* - [^\n]*", body, re.MULTILINE)
-    if any(re.search(r"#\s*(?:SKIP|TODO)\b", entry, re.IGNORECASE) for entry in outcomes):
+    if any(re.search(r"[ \t]+#\s*(?:SKIP|TODO)\b", entry, re.IGNORECASE) for entry in outcomes):
         return False
     if len(summary[2]) > len(str(len(outcomes))) or int(summary[2]) > len(outcomes):
         return False

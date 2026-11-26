@@ -122,3 +122,15 @@ class ReleaseArchiveTest(unittest.TestCase):
         self.assertTrue(gate.python_suite(subprocess.CompletedProcess([], 0, "", python)))
         for text in [python.replace("0.001s", "wrong"), "Ran 2 tests in 0.001s\n" + python]:
             self.assertFalse(gate.python_suite(subprocess.CompletedProcess([], 0, "", text)))
+
+    def test_actual_node_tap_escaped_directive_text_is_a_name(self):
+        case = self.archive / "literal.test.mjs"
+        case.write_text(
+            'import test from "node:test";\n'
+            'test("literal # SKIP and # TODO are part of the title", () => {});\n'
+        )
+        result = subprocess.run(["node", "--test", "--test-reporter=tap", str(case)],
+                                capture_output=True, text=True, check=True)
+        self.assertIn(r"\# SKIP", result.stdout)
+        self.assertIn(r"\# TODO", result.stdout)
+        self.assertTrue(gate.node_suite(result))
