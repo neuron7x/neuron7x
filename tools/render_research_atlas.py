@@ -10,6 +10,7 @@ Neither verification mode executes project tests or claims release readiness.
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import html
 import json
@@ -51,6 +52,22 @@ def expected_blobs(data: dict) -> dict[tuple[str, str, str], str]:
     return expected
 
 
+def valid_label(value: object) -> bool:
+    return (isinstance(value, str) and 1 <= len(value) <= 24 and bool(value.strip(" "))
+            and re.search(r"[\x00-\x1f\ud800-\udfff\ufffe\uffff]", value) is None)
+
+
+def visual_labels(project: dict) -> None:
+    if not valid_label(project["name"]):
+        raise ValueError("Invalid project label")
+    for key in ("subtitle", "mobile_subtitle"):
+        if key == "mobile_subtitle" and key not in project:
+            continue
+        lines = project[key]
+        if not isinstance(lines, list) or len(lines) != 2 or not all(map(valid_label, lines)):
+            raise ValueError("Invalid project subtitle")
+
+
 def load_manifest() -> dict:
     data = json.loads((ROOT / "research/atlas.json").read_text(encoding="utf-8"),
                       object_pairs_hook=unique_json_object)
@@ -75,8 +92,7 @@ def load_manifest() -> dict:
             path = reference["path"]
             if any(part in {"", ".", ".."} for part in path.split("/")) or not SHA.fullmatch(reference["blob"]):
                 raise ValueError("Invalid source reference")
-        if len(project["subtitle"]) != 2:
-            raise ValueError("Each project needs two concise visual labels")
+        visual_labels(project)
     expected_blobs(data)
     return data
 
@@ -260,9 +276,21 @@ def verify_remote(data: dict) -> None:
         url = f"https://api.github.com/repos/{repository}/contents/{quote(path, safe='/')}?ref={commit}"
         request = Request(url, headers={'Accept': 'application/vnd.github+json', 'User-Agent': 'neuron7x-research-atlas'})
         with urlopen(request, timeout=20) as response:
-            observed = json.load(response)
-        if not isinstance(observed, dict) or observed.get("sha") != blob:
-            raise ValueError(f"Source identity mismatch: {repository} / {path}")
+            observed = json.load(response, object_pairs_hook=unique_json_object)
+        label = f"{repository} / {path}"
+        if (not isinstance(observed, dict) or observed.get("type") != "file"
+                or observed.get("path") != path or observed.get("encoding") != "base64"
+                or observed.get("sha") != blob or observed.get("submodule_git_url") is not None
+                or type(observed.get("size")) is not int or not isinstance(observed.get("content"), str)):
+            raise ValueError(f"Source identity mismatch: {label}")
+        encoded = observed["content"].replace("\r", "").replace("\n", "")
+        try:
+            payload = base64.b64decode(encoded, validate=True)
+        except ValueError as error:
+            raise ValueError(f"Invalid source encoding: {label}") from error
+        git_blob = f"blob {len(payload)}\0".encode("ascii") + payload
+        if len(payload) != observed["size"] or hashlib.sha1(git_blob, usedforsecurity=False).hexdigest() != blob:
+            raise ValueError(f"Source bytes mismatch: {label}")
     print(f"Verified {len(expected)} distinct public Git blob references; no project tests executed.")
 
 

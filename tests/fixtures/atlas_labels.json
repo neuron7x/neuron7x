@@ -1,0 +1,15 @@
+[
+  {"field": "name", "value": "Проєкт 🌐", "valid": true},
+  {"field": "name", "value": "AAAAAAAAAA🌐B", "valid": true},
+  {"field": "name", "value": "🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐", "valid": true},
+  {"field": "name", "value": "abcdefghijklmnopqrstuvwxy", "valid": false},
+  {"field": "name", "value": " ", "valid": false},
+  {"field": "name", "value": "A\u0000B", "valid": false},
+  {"field": "name", "value": "\ud800", "valid": false},
+  {"field": "name", "value": "text\uffff", "valid": false},
+  {"field": "subtitle", "value": ["First", "Другий"], "valid": true},
+  {"field": "subtitle", "value": "ab", "valid": false},
+  {"field": "subtitle", "value": [42, "ok"], "valid": false},
+  {"field": "mobile_subtitle", "value": ["Один"], "valid": false},
+  {"field": "mobile_subtitle", "value": ["First", "Другий"], "valid": true}
+]

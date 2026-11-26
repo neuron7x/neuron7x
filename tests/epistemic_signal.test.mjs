@@ -68,3 +68,15 @@ test("eight nodes form two centered rows with bounded responsive geometry",()=>{
  assert.equal((mobile.match(/data-project="/g)||[]).length,8);
  assert.match(wide,/32 PINNED ROUTES/);
 });
+
+test("Python and Node share the visual label acceptance matrix",()=>{
+ const fixtures=JSON.parse(readFileSync(join(root,"tests/fixtures/atlas_labels.json"),"utf8"));
+ for(const {field,value,valid} of fixtures){
+  const input=JSON.parse(JSON.stringify(atlas));
+  input.projects[0][field]=value;
+  if(valid){
+   assert.equal(verify(input),input);
+   assert.doesNotMatch(render(input,"dark",true),/[\uD800-\uDFFF]/u);
+  }else assert.throws(()=>verify(input));
+ }
+});

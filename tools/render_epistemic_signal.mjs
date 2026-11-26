@@ -20,14 +20,21 @@ function validDate(value) {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
+function validLabel(value) {
+  return typeof value === "string" && value.length > 0 && [...value].length <= 24 &&
+    /[^ ]/.test(value) && !/[\u0000-\u001f\ud800-\udfff\ufffe\uffff]/u.test(value);
+}
+const validLines = value => Array.isArray(value) && value.length === 2 && value.every(validLabel);
+
 export function verify(m){
  if(!m||m.schema!=="neuron7x.research-atlas.v1"||!Array.isArray(m.projects)||m.projects.length<1||m.projects.length>8)throw Error("Invalid schema or project count");
  if(!validDate(m.verified_date)||m.verification_scope!==verificationScope)throw Error("Unsupported verification scope");
  const seen=new Set();
  const references=new Map();
  for(const p of m.projects){
-  if(!p||typeof p.slug!=="string"||!/^[a-z][a-z0-9-]*$/.test(p.slug)||seen.has(p.slug)||typeof p.name!=="string"||!p.name||p.name.length>24)throw Error("Invalid project identity");
+  if(!p||typeof p.slug!=="string"||!/^[a-z][a-z0-9-]*$/.test(p.slug)||seen.has(p.slug)||!validLabel(p.name))throw Error("Invalid project identity");
   seen.add(p.slug);
+  if(!validLines(p.subtitle)||(Object.hasOwn(p,"mobile_subtitle")&&!validLines(p.mobile_subtitle)))throw Error("Invalid project subtitle");
   if(typeof p.repository!=="string"||!/^neuron7x\/[A-Za-z0-9_.-]+$/.test(p.repository)||[".",".."].includes(p.repository.split("/")[1])||!sha(p.commit))throw Error("Invalid source revision");
   if(Object.keys(p.files||{}).length!==ROLES.length||ROLES.some(role=>!Object.hasOwn(p.files||{},role)))throw Error("Incomplete evidence roles");
   for(const r of ROLES){
@@ -72,7 +79,7 @@ export function render(m,theme,small=false){
   const shared=[];
   for(let a=0;a<4;a++)for(let b=a+1;b<4;b++)if(p.files[ROLES[a]].blob===p.files[ROLES[b]].blob)shared.push([a,b]);
   out.push(`<g data-project="${escapeXml(p.slug)}">`);
-  out.push(`<text x="${x}" y="${Y-41}" text-anchor="middle" fill="${c.fg}" font-size="${small?10:15}" font-weight="600">${escapeXml(small?p.name.slice(0,11):p.name)}</text>`);
+  out.push(`<text x="${x}" y="${Y-41}" text-anchor="middle" fill="${c.fg}" font-size="${small?10:15}" font-weight="600">${escapeXml(small?[...p.name].slice(0,11).join(""):p.name)}</text>`);
   out.push(`<circle cx="${x}" cy="${Y}" r="13" fill="none" stroke="${c.stroke}" stroke-width="1.2"/>`);
   out.push(`<path d="M ${x-10} ${Y-8} A 13 13 0 0 1 ${x+10} ${Y-8}" fill="none" stroke="${c.red}" stroke-width="1.2" opacity=".8" transform="rotate(${seed%45-22} ${x} ${Y})"/>`);
   out.push(`<circle cx="${x}" cy="${Y}" r="2.7" fill="${c.red}"/>`);
