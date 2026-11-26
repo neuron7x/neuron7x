@@ -70,3 +70,28 @@ class IdentificationLimits(unittest.TestCase):
                 identified[index] += outcomes.count(outcome) == 1
         self.assertEqual(identified, [len(pairs) // 2] * 4)
         self.assertEqual(measure(one_hot)["A"], 2)
+
+
+class WiderObservations(unittest.TestCase):
+    def test_packed_faults_match_scalar_across_every_primitive(self):
+        from wider import packed
+        from iscas import parse
+
+        circuit = parse("""
+module toy (a,b,c,d,e,f,g,h,i);
+input a,b;
+output c,d,e,f,g,h,i;
+and U1 (c,a,b);
+nand U2 (d,a,b);
+or U3 (e,c,d);
+nor U4 (f,a,b);
+xor U5 (g,d,f);
+buf U6 (h,g);
+not U7 (i,h);
+endmodule
+""", "toy")
+        vectors = list(product((0, 1), repeat=2))
+        faults = tuple((node, index % 2) for index, node in enumerate(circuit.nodes))
+        actual = packed(circuit, vectors, faults)
+        separate = zip(*(circuit.simulate(vector, faults) for vector in vectors), strict=True)
+        self.assertEqual([tuple(row) for row in actual], list(separate))
