@@ -1,0 +1,81 @@
+{
+  "schema": "neuron7x.conditional-inference.v1",
+  "basis": "synthetic",
+  "source": {
+    "project": "cwc",
+    "commit": "f2396198749ee9cf2d51078cc890e299f51d4bd9"
+  },
+  "budget": 3,
+  "experiments": [
+    {
+      "id": "observe",
+      "kind": "observation"
+    },
+    {
+      "id": "A",
+      "kind": "intervention"
+    },
+    {
+      "id": "B",
+      "kind": "intervention"
+    },
+    {
+      "id": "C",
+      "kind": "intervention"
+    }
+  ],
+  "models": [
+    {
+      "id": "M0",
+      "predictions": {
+        "observe": "ZERO",
+        "A": "0",
+        "B": "0",
+        "C": "0"
+      }
+    },
+    {
+      "id": "M1",
+      "predictions": {
+        "observe": "ZERO",
+        "A": "0",
+        "B": "1",
+        "C": "0"
+      }
+    },
+    {
+      "id": "M2",
+      "predictions": {
+        "observe": "ZERO",
+        "A": "1",
+        "B": "0",
+        "C": "1"
+      }
+    },
+    {
+      "id": "M3",
+      "predictions": {
+        "observe": "ZERO",
+        "A": "1",
+        "B": "0",
+        "C": "2"
+      }
+    },
+    {
+      "id": "M4",
+      "predictions": {
+        "observe": "ZERO",
+        "A": "1",
+        "B": "0",
+        "C": "0"
+      }
+    }
+  ],
+  "case_id": "adaptive_categorical",
+  "observations": [
+    {
+      "experiment": "observe",
+      "outcome": "ZERO"
+    }
+  ]
+}

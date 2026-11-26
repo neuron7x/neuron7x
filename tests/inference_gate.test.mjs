@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {resolve,join,dirname} from "node:path";
 import {fileURLToPath} from "node:url";
-import {PROTOCOL,DEBT,validate,infer} from "../inference/kernel.mjs";
+import {PROTOCOL,DEBT,EXACT_TWO_STEP,validate,infer} from "../inference/kernel.mjs";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
 const atlas=JSON.parse(readFileSync(join(root,"research/atlas.json"),"utf8"));
 const names=["passive_twins","interventional_split","synchronized_mimicker","model_class_refuted","source_only"];
@@ -54,4 +54,97 @@ test("invalid input fails closed",()=>{
 test("repeatability without randomness or remote model",()=>{
  assert.equal(PROTOCOL,"neuron7x.conditional-inference.v1");
  for(let i=0;i<20;i++)assert.deepEqual(infer(get("interventional_split"),atlas),infer(get("interventional_split"),atlas));
+});
+
+function exactCase(rows, budget = 3) {
+  const c = get("passive_twins");
+  const interventions = Array.from({ length: rows[0].length }, (_, index) => "ABCD"[index]);
+  c.budget = budget;
+  c.experiments = [
+    { id: "observe", kind: "observation" },
+    ...interventions.map(id => ({ id, kind: "intervention" })),
+  ];
+  c.models = rows.map((row, index) => ({
+    id: `M${index}`,
+    predictions: {
+      observe: "ZERO",
+      ...Object.fromEntries(interventions.map((id, column) => [id, row[column]])),
+    },
+  }));
+  return c;
+}
+
+test("exact policy plans different continuations for categorical outcomes", () => {
+  const c = get("adaptive_categorical");
+  assert.equal(infer(c, atlas).next_intervention, "C");
+  const initial = infer(c, atlas, EXACT_TWO_STEP);
+  assert.equal(initial.verdict, "ABSTAIN");
+  assert.equal(initial.next_intervention, "A");
+  assert.deepEqual(initial.intervention_plan, { horizon: 2, selected_models: 5, intervention_uses: 10 });
+  for (const target of c.models) {
+    const branch = cp(c);
+    branch.observations.push({ experiment: "A", outcome: target.predictions.A });
+    const second = infer(branch, atlas, EXACT_TWO_STEP).next_intervention;
+    assert.equal(second, target.predictions.A === "0" ? "B" : "C");
+    branch.observations.push({ experiment: second, outcome: target.predictions[second] });
+    const result = infer(branch, atlas, EXACT_TWO_STEP);
+    assert.equal(result.verdict, "CONDITIONAL_MODEL_SELECTION");
+    assert.deepEqual(result.survivors, [target.id]);
+    assert.equal(result.next_intervention, null);
+    assert.equal(result.causal_authority, false);
+    assert.equal(result.independent_replication, false);
+  }
+  c.models.reverse();
+  c.experiments.reverse();
+  assert.deepEqual(infer(c, atlas, EXACT_TWO_STEP), initial);
+});
+
+test("one remaining record is valued by admissible selections and arbitrary category labels", () => {
+  const binary = exactCase(["00", "00", "10", "11"], 2);
+  assert.equal(infer(binary, atlas).next_intervention, "A");
+  assert.equal(infer(binary, atlas, EXACT_TWO_STEP).next_intervention, "B");
+  const categorical = exactCase([
+    ["constructor", "0"], ["toString", "0"], ["__proto__", "0"], ["__proto__", "1"],
+  ], 2);
+  const plan = infer(categorical, atlas, EXACT_TWO_STEP);
+  assert.equal(plan.next_intervention, "A");
+  assert.deepEqual(plan.intervention_plan, { horizon: 1, selected_models: 2, intervention_uses: 4 });
+});
+
+test("witness admission and unnecessary interventions remain distinct", () => {
+  const c = exactCase(["00", "01"]);
+  c.models[1].predictions.observe = "ONE";
+  const start = infer(c, atlas, EXACT_TWO_STEP);
+  assert.equal(start.verdict, "ABSTAIN");
+  assert.equal(start.next_intervention, "B");
+  assert.deepEqual(start.intervention_plan, { horizon: 2, selected_models: 1, intervention_uses: 1 });
+  c.observations.push({ experiment: "B", outcome: "0" });
+  const observed = infer(c, atlas, EXACT_TWO_STEP);
+  assert.equal(observed.verdict, "CONDITIONAL_MODEL_SELECTION");
+  assert.equal(observed.next_intervention, null);
+  assert.equal(observed.intervention_plan.intervention_uses, 0);
+});
+
+test("exact policy abstains within its horizon and fails closed at the existing boundaries", () => {
+  const cube = exactCase(Array.from({ length: 8 }, (_, n) => n.toString(2).padStart(3, "0")), 4);
+  const zero = infer(cube, atlas, EXACT_TWO_STEP);
+  assert.equal(zero.reason, "NO_SELECTION_WITHIN_PLANNING_HORIZON");
+  assert.equal(zero.next_intervention, null);
+  assert.equal(zero.intervention_plan.selected_models, 0);
+  assert.ok(infer(cube, atlas).next_intervention);
+
+  const c = get("passive_twins");
+  c.budget = 1;
+  const exhausted = infer(c, atlas, EXACT_TWO_STEP);
+  assert.equal(exhausted.intervention_plan.horizon, 0);
+  assert.equal(exhausted.next_intervention, null);
+  c.source.commit = "a".repeat(40);
+  const mismatch = infer(c, atlas, EXACT_TWO_STEP);
+  assert.equal(mismatch.reason, "SOURCE_MISMATCH");
+  assert.equal(mismatch.next_intervention, null);
+  assert.ok(!Object.hasOwn(mismatch, "intervention_plan"));
+  const refuted = infer(get("model_class_refuted"), atlas, EXACT_TWO_STEP);
+  assert.equal(refuted.verdict, "MODEL_CLASS_REFUTED");
+  assert.equal(refuted.next_intervention, null);
+  assert.throws(() => infer(c, atlas, "UNKNOWN"), /INVALID_INTERVENTION_POLICY/);
 });

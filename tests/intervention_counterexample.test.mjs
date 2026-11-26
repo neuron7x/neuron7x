@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { infer } from "../inference/kernel.mjs";
+import { EXACT_TWO_STEP, infer } from "../inference/kernel.mjs";
 
 const read = path => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
 const atlas = read("../research/atlas.json");
@@ -20,7 +20,7 @@ const makeModels = rows => rows.map((signature, index) => ({
   },
 }));
 
-function greedyReplay(models, target) {
+function replay(models, target, policy) {
   const input = {
     schema: "neuron7x.conditional-inference.v1",
     case_id: "two_intervention_counterexample",
@@ -32,11 +32,13 @@ function greedyReplay(models, target) {
     observations: [{ experiment: "observe", outcome: "0" }],
   };
   const queries = [];
+  let initial;
   while (true) {
-    const result = infer(input, atlas);
+    const result = infer(input, atlas, policy);
+    initial ??= result;
     assert.equal(result.causal_authority, false);
     assert.equal(result.independent_replication, false);
-    if (!result.next_intervention) return { result, queries };
+    if (!result.next_intervention) return { result, queries, initial };
     const experiment = result.next_intervention;
     queries.push(experiment);
     input.observations.push({ experiment, outcome: target.predictions[experiment] });
@@ -59,7 +61,7 @@ test("maximum immediate pair separation can lose identifications under a fixed b
   assert.equal(new Set(signatures).size, models.length);
   let identified = 0;
   for (const target of models) {
-    const { result, queries } = greedyReplay(models, target);
+    const { result, queries } = replay(models, target);
     assert.equal(queries[0], "A");
     assert.ok(queries.length <= 2);
     if (result.verdict === "CONDITIONAL_MODEL_SELECTION") {
@@ -148,16 +150,31 @@ test("exhaustive six-model census separates forced deficits from tie effects", t
   let rootLoss = 0;
   let balancedRootLoss = 0;
   let adaptiveGain = 0;
+  let runtimeOptimal = 0;
   for (const table of combinations(rows, 6)) {
     const models = makeModels(table);
     const oracle = optimalCount(models, interventions, 2);
     const { min, max, lex } = greedyCounts(models, interventions, 2);
     let selected = 0;
     let first;
+    let exactSelections = 0;
+    let exactUses = 0;
+    let advertisedPlan;
     for (const target of models) {
-      const { result, queries } = greedyReplay(models, target);
+      const { result, queries } = replay(models, target);
       first ??= queries[0];
       assert.equal(queries[0], first);
+      const exact = replay(models, target, EXACT_TWO_STEP);
+      assert.ok(exact.queries.length <= 2);
+      advertisedPlan ??= exact.initial.intervention_plan;
+      exactUses += exact.queries.length;
+      if (exact.result.verdict === "CONDITIONAL_MODEL_SELECTION") {
+        assert.deepEqual(exact.result.survivors, [target.id]);
+        exactSelections++;
+      } else {
+        assert.equal(exact.result.verdict, "ABSTAIN");
+        assert.ok(exact.result.survivors.includes(target.id));
+      }
       if (result.verdict === "CONDITIONAL_MODEL_SELECTION") {
         assert.deepEqual(result.survivors, [target.id]);
         selected++;
@@ -166,6 +183,13 @@ test("exhaustive six-model census separates forced deficits from tie effects", t
         assert.ok(result.survivors.includes(target.id));
       }
     }
+    assert.equal(exactSelections, oracle, table.join(","));
+    assert.deepEqual(advertisedPlan, {
+      horizon: 2,
+      selected_models: exactSelections,
+      intervention_uses: exactUses,
+    });
+    runtimeOptimal++;
     assert.equal(selected, lex, table.join(","));
     assert.ok(min <= lex && lex <= max && max <= oracle, table.join(","));
     const rootValues = interventions.map(id => twoStepRootValues(models, id));
@@ -185,7 +209,7 @@ test("exhaustive six-model census separates forced deficits from tie effects", t
     else alwaysOptimal++;
   }
   const census = {
-    gaps, forced, tieSensitive, alwaysOptimal, terminalLoss, rootLoss, balancedRootLoss, adaptiveGain,
+    gaps, forced, tieSensitive, alwaysOptimal, terminalLoss, rootLoss, balancedRootLoss, adaptiveGain, runtimeOptimal,
   };
   t.diagnostic(JSON.stringify(census));
   assert.equal(forced + tieSensitive + alwaysOptimal, 8008);
@@ -198,5 +222,6 @@ test("exhaustive six-model census separates forced deficits from tie effects", t
     rootLoss: 5536,
     balancedRootLoss: 5472,
     adaptiveGain: 2688,
+    runtimeOptimal: 8008,
   });
 });

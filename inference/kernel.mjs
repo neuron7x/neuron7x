@@ -1,4 +1,7 @@
 /** NEURON7X Conditional Inference Gate v1 — finite-model discrimination, not causal proof. */
+import { EXACT_TWO_STEP, planTwoStep } from "./two_step_policy.mjs";
+export { EXACT_TWO_STEP };
+
 export const PROTOCOL = "neuron7x.conditional-inference.v1";
 export const DEBT = Object.freeze(["candidate_class_completeness","intervention_fidelity","outcome_provenance","unmodelled_exogenous_mimickers"]);
 const ID = /^[A-Za-z][A-Za-z0-9:_-]{0,47}$/;
@@ -38,38 +41,50 @@ export function validate(x) {
   }
   return x;
 }
-export function infer(x,atlas) {
+export function infer(x,atlas,policy="pairwise") {
   validate(x);
+  if(policy!=="pairwise"&&policy!==EXACT_TWO_STEP)throw Error("INVALID_INTERVENTION_POLICY");
+  const exactPlanning=policy===EXACT_TWO_STEP;
   if(!obj(atlas)||atlas.schema!=="neuron7x.research-atlas.v1"||!Array.isArray(atlas.projects))throw Error("INVALID_ATLAS");
   const pinned=atlas.projects.some(p=>p.slug===x.source.project&&p.commit===x.source.commit);
   const base={protocol:PROTOCOL,case_id:x.case_id,basis:x.basis,
     source_status:pinned?"PINNED_REFERENCE_ONLY":"SOURCE_MISMATCH",
     causal_authority:false,independent_replication:false,unresolved_assumptions:DEBT.slice()};
+  if(exactPlanning)base.intervention_policy=policy;
   if(!pinned)return {...base,verdict:"ABSTAIN",reason:"SOURCE_MISMATCH",survivors:[],excluded:[],used_experiments:[],next_intervention:null};
   const ms=x.models.slice().sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
   const obs=x.observations.slice().sort((a,b)=>a.experiment<b.experiment?-1:a.experiment>b.experiment?1:0);
   const keep=ms.filter(m=>obs.every(o=>m.predictions[o.experiment]===o.outcome));
   const excluded=ms.filter(m=>!keep.includes(m)).map(m=>m.id);
   const used=obs.map(o=>o.experiment);
-  let next=null,score=0;
-  const tests=x.experiments.filter(e=>e.kind==="intervention").slice().sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
-  for(const e of tests){
-    if(used.includes(e.id))continue;
-    let pairs=0;
-    for(let i=0;i<keep.length;i++)for(let j=i+1;j<keep.length;j++)
-      if(keep[i].predictions[e.id]!==keep[j].predictions[e.id])pairs++;
-    if(pairs>score){next=e.id;score=pairs;}
+  const tests=x.experiments.filter(e=>e.kind==="intervention").map(e=>e.id).sort();
+  const available=tests.filter(id=>!used.includes(id));
+  const informative=new Set(tests.filter(id=>ms.some(model=>model.predictions[id]!==ms[0].predictions[id])));
+  const witness=used.some(id=>informative.has(id));
+  const remaining=x.budget-used.length;
+  let next=null;
+  if(exactPlanning){
+    const horizon=Math.min(2,remaining,available.length);
+    const plan=planTwoStep(keep,available,informative,horizon,witness);
+    next=plan.next;
+    base.intervention_plan={horizon,selected_models:plan.selections,intervention_uses:plan.uses};
+  }else if(remaining>0){
+    let score=0;
+    for(const id of available){
+      let pairs=0;
+      for(let i=0;i<keep.length;i++)for(let j=i+1;j<keep.length;j++)
+        if(keep[i].predictions[id]!==keep[j].predictions[id])pairs++;
+      if(pairs>score){next=id;score=pairs;}
+    }
   }
-  if(used.length>=x.budget)next=null;
   let verdict="ABSTAIN",reason="INSUFFICIENT_DISCRIMINATION";
   if(keep.length===0){verdict="MODEL_CLASS_REFUTED";reason="NO_DECLARED_MODEL_EXPLAINS_RECORD";}
   else if(keep.length===1){
-    const witness=obs.some(o=>x.experiments.find(e=>e.id===o.experiment).kind==="intervention"&&
-      ms.some(m=>m.predictions[o.experiment]!==keep[0].predictions[o.experiment]));
     if(witness){verdict="CONDITIONAL_MODEL_SELECTION";reason="DECLARED_INTERVENTION_DISCRIMINATED_CANDIDATES";}
     else reason="NO_DISCRIMINATING_INTERVENTION_OBSERVED";
   }else if(next===null){
-    reason=used.length>=x.budget?"BUDGET_EXHAUSTED_OR_NO_DISTINGUISHING_TEST":"NON_IDENTIFIABLE_WITHIN_PROTOCOL";
+    if(remaining===0)reason="BUDGET_EXHAUSTED_OR_NO_DISTINGUISHING_TEST";
+    else reason=exactPlanning?"NO_SELECTION_WITHIN_PLANNING_HORIZON":"NON_IDENTIFIABLE_WITHIN_PROTOCOL";
   }
   return {...base,verdict,reason,survivors:keep.map(m=>m.id),excluded,used_experiments:used,next_intervention:next};
 }
