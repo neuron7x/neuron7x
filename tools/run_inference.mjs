@@ -3,7 +3,7 @@
 import { resolve, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { EXACT_CLASS_TWO_STEP, EXACT_TWO_STEP, infer } from "../inference/kernel.mjs";
-import { advanceReceipt, createReceipt, verifyReceipt } from "../inference/receipt.mjs";
+import { advanceReceipt, createReceipt, verifyReceipt, verifyTransition } from "../inference/receipt.mjs";
 import { readJson, readUtf8 } from "./read_json.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -48,11 +48,11 @@ function main(argv) {
   const [flag, ...paths] = argv;
   const arities = new Map([
     ["--check", 0], ["--exact-two-step", 1], ["--exact-class-two-step", 1],
-    ["--receipt", 1], ["--receipt-class", 1], ["--verify-receipt", 2], ["--verify-anchored-receipt", 3], ["--advance-receipt", 3],
+    ["--receipt", 1], ["--receipt-class", 1], ["--verify-receipt", 2], ["--verify-anchored-receipt", 3], ["--advance-receipt", 3], ["--verify-transition", 5],
   ]);
   const ordinary = argv.length === 1 && !flag.startsWith("-");
   if (!ordinary && (arities.get(flag) !== paths.length || paths.some(path => path.startsWith("-")))) {
-    console.error("Usage: node tools/run_inference.mjs --check | [--exact-two-step|--exact-class-two-step|--receipt|--receipt-class] <case.json> | --verify-receipt <case.json> <receipt.json> | --verify-anchored-receipt <case.json> <receipt.json> <trusted-sha256> | --advance-receipt <prior-case.json> <receipt.json> <new-case.json>");
+    console.error("Usage: node tools/run_inference.mjs --check | [--exact-two-step|--exact-class-two-step|--receipt|--receipt-class] <case.json> | --verify-receipt <case.json> <receipt.json> | --verify-anchored-receipt <case.json> <receipt.json> <trusted-sha256> | --advance-receipt <prior-case.json> <receipt.json> <new-case.json> | --verify-transition <prior-case.json> <prior-receipt.json> <new-case.json> <new-receipt.json> <trusted-prior-sha256>");
     return 2;
   }
 
@@ -62,6 +62,10 @@ function main(argv) {
   if (flag === "--verify-receipt" || flag === "--verify-anchored-receipt") {
     verifyReceipt(input(paths[0]), atlas, input(paths[1]), paths[2]);
     return print({ status: "RECEIPT_VERIFIED" });
+  }
+  if (flag === "--verify-transition") {
+    verifyTransition(input(paths[0]), input(paths[2]), atlas, input(paths[1]), input(paths[3]), paths[4]);
+    return print({ status: "TRANSITION_VERIFIED" });
   }
   if (flag === "--advance-receipt") {
     return print(advanceReceipt(input(paths[0]), input(paths[2]), atlas, input(paths[1])));

@@ -139,11 +139,11 @@ export function verifyReceipt(input, atlas, receipt, expectedDigest) {
   return replayReceipt(snapshot(input), snapshot(atlas), snapshot(receipt), expectedDigest);
 }
 
-export function advanceReceipt(previous, current, atlas, receipt) {
+export function advanceReceipt(previous, current, atlas, receipt, expectedDigest) {
   const prior = snapshot(previous);
   const data = snapshot(current);
   const pins = snapshot(atlas);
-  const trusted = replayReceipt(prior, pins, snapshot(receipt));
+  const trusted = replayReceipt(prior, pins, snapshot(receipt), expectedDigest);
   validate(data);
   const length = prior.observations.length;
   if (digest(declaration(data)) !== trusted.declaration_sha256
@@ -152,4 +152,11 @@ export function advanceReceipt(previous, current, atlas, receipt) {
     throw Error("RECEIPT_HISTORY_MISMATCH");
   }
   return receiptAt(data, pins, trusted.policy, trusted.start_records);
+}
+
+export function verifyTransition(previous, current, atlas, priorReceipt, nextReceipt, priorDigest) {
+  if (priorDigest === undefined) throw Error("INVALID_RECEIPT_ANCHOR");
+  const expected = advanceReceipt(previous, current, atlas, priorReceipt, priorDigest);
+  if (canonical(expected) !== canonical(nextReceipt)) throw Error("RECEIPT_TRANSITION_MISMATCH");
+  return expected;
 }

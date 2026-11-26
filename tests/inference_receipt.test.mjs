@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { EXACT_CLASS_TWO_STEP, EXACT_TWO_STEP, infer } from "../inference/kernel.mjs";
-import { advanceReceipt, createReceipt, verifyReceipt } from "../inference/receipt.mjs";
+import { advanceReceipt, createReceipt, verifyReceipt, verifyTransition } from "../inference/receipt.mjs";
 
 const read = name => JSON.parse(readFileSync(new URL("../" + name, import.meta.url), "utf8"));
 const atlas = read("research/atlas.json");
@@ -153,6 +153,11 @@ test("receipt commands bind and verify real case files", t => {
   const advanced = run("--advance-receipt", prior, path, current);
   assert.equal(advanced.status, 0, advanced.stderr);
   assert.equal(JSON.parse(advanced.stdout).result.next_intervention, "C");
+  const nextReceipt = join(dir, "next.json");
+  writeFileSync(nextReceipt, advanced.stdout);
+  const transition = run("--verify-transition", prior, path, current, nextReceipt, anchor);
+  assert.equal(transition.status, 0, transition.stderr);
+  assert.equal(JSON.parse(transition.stdout).status, "TRANSITION_VERIFIED");
   const stale = run("--verify-receipt", current, path);
   assert.equal(stale.status, 1);
   assert.equal(stale.stdout, "");
@@ -210,4 +215,22 @@ test("receipt boundaries reject live properties without executing getters or pro
   const cycle = { ...genuine };
   cycle.loop = cycle;
   assert.throws(() => verifyReceipt(input, atlas, cycle), /INVALID_RECEIPT_VALUE/);
+});
+
+test("transition verification rejects a rerooted receipt and a mismatched sibling", () => {
+  const input = fixture("adaptive_categorical");
+  const root = createReceipt(input, atlas);
+  const left = add(input, "A", "0");
+  const right = add(input, "A", "1");
+  const leftReceipt = advanceReceipt(input, left, atlas, root);
+  const rightReceipt = advanceReceipt(input, right, atlas, root);
+  assert.deepEqual(verifyTransition(input, right, atlas, root, rightReceipt, root.receipt_sha256), rightReceipt);
+  assert.deepEqual(verifyTransition(input, left, atlas, root, leftReceipt, root.receipt_sha256), leftReceipt);
+
+  const rerooted = createReceipt(right, atlas);
+  assert.deepEqual(verifyReceipt(right, atlas, rerooted), rerooted);
+  assert.throws(() => verifyTransition(input, right, atlas, root, rerooted, root.receipt_sha256), /RECEIPT_TRANSITION_MISMATCH/);
+  assert.throws(() => verifyTransition(input, right, atlas, root, leftReceipt, root.receipt_sha256), /RECEIPT_TRANSITION_MISMATCH/);
+  assert.throws(() => verifyTransition(input, right, atlas, root, rightReceipt), /INVALID_RECEIPT_ANCHOR/);
+  assert.throws(() => verifyTransition(input, right, atlas, root, rightReceipt, leftReceipt.receipt_sha256), /RECEIPT_ANCHOR_MISMATCH/);
 });
