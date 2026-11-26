@@ -131,16 +131,23 @@ def run_check(
 def node_suite(result: subprocess.CompletedProcess[str]) -> bool:
     output = result.stdout
     summary = re.search(
-        r"^1\.\.([1-9]\d*)\n# tests ([1-9]\d*)\n# suites \d+\n# pass ([1-9]\d*)\n"
+        r"^1\.\.([1-9]\d*)\n# tests ([1-9]\d*)\n# suites (\d+)\n# pass ([1-9]\d*)\n"
         r"# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms \d+(?:\.\d+)?\n?\Z",
         output, re.MULTILINE,
     )
-    if summary is None or not output.startswith("TAP version 13\n") or summary[2] != summary[3]:
+    if summary is None or not output.startswith("TAP version 13\n") or summary[2] != summary[4]:
         return False
     if len(re.findall(r"^# tests ", output, re.MULTILINE)) != 1:
         return False
     body = output[:summary.start()]
     if re.search(r"^[ \t]*not ok\b", body, re.MULTILINE):
+        return False
+    outcomes = re.findall(r"^[ \t]*ok [1-9]\d* - [^\n]*", body, re.MULTILINE)
+    if any(re.search(r"#\s*(?:SKIP|TODO)\b", entry, re.IGNORECASE) for entry in outcomes):
+        return False
+    if len(summary[2]) > len(str(len(outcomes))) or int(summary[2]) > len(outcomes):
+        return False
+    if str(len(outcomes) - int(summary[2])) != summary[3]:
         return False
     top = re.findall(r"^ok ([1-9]\d*) - ", body, re.MULTILINE)
     return str(len(top)) == summary[1] and all(number == str(index) for index, number in enumerate(top, 1))
@@ -356,6 +363,18 @@ def verify(root: Path, results: list[dict]) -> None:
             ))
 
         mutate(root, source_path, lambda source: source.replace(original, altered, 1), reject_failed_proof)
+
+    def reject_report_drift() -> None:
+        require("Independent reports reject coherent execution-order drift",
+                [*python, "-m", "unittest", "discover", "-s", "tests", "-p", "test_check_release_reports.py"],
+                root, 1, lambda result: (
+                    "FAIL: test_individually_valid_reports_with_different_order_are_refused" in result.stderr
+                    and "ValueError not raised" in result.stderr
+                ))
+
+    mutate(root, "tools/check_release_reports.py",
+           lambda source: source.replace(b"if left_bytes != right_bytes:", b"if False:"),
+           reject_report_drift)
 
 
 def write_report(destination: Path, report: dict) -> None:
