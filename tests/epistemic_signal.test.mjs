@@ -33,7 +33,12 @@ test("invalid evidence always fails closed",()=>{
   x=>x.projects[0].commit="invalid",
   x=>x.projects[1].files.reproduce.path="../unsafe",
   x=>x.projects[1].slug=x.projects[0].slug,
-  x=>x.verification_scope="All tests passed"
+  x=>x.verification_scope="All tests passed",
+  x=>x.verified_date="2026-02-30",
+  x=>x.projects[0].commit=[x.projects[0].commit],
+  x=>x.projects[0].repository="neuron7x/..",
+  x=>x.projects[0].files.reproduce.path="docs//./path",
+  x=>x.projects[0].files.reproduce.path=x.projects[0].files.inspect.path
  ]){
   const x=JSON.parse(JSON.stringify(atlas));change(x);assert.throws(()=>verify(x));
  }

@@ -7,22 +7,35 @@
 import {readFileSync,writeFileSync,mkdirSync} from "node:fs";
 import {join,resolve,dirname} from "node:path";
 import {fileURLToPath} from "node:url";
+import {readJson} from "./read_json.mjs";
 export const ROLES=["inspect","reproduce","falsify","boundary"];
 export function escapeXml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 export function fnv32(s){let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619)>>>0;return h>>>0}
 export function distinct(p){return new Set(ROLES.map(r=>p.repository+"@"+p.commit+":"+p.files[r].blob)).size}
+const verificationScope = "Source references and blob identities verified. Project test suites and experiments were not executed for this profile update.";
+const sha = value => typeof value === "string" && /^[a-f0-9]{40}$/.test(value);
+function validDate(value) {
+  if (typeof value !== "string" || !/^(?!0000)\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 export function verify(m){
- if(m.schema!=="neuron7x.research-atlas.v1"||!Array.isArray(m.projects)||m.projects.length<1||m.projects.length>8)throw Error("Invalid schema or project count");
- if(!/^\d{4}-\d{2}-\d{2}$/.test(m.verified_date)||!/not executed/i.test(m.verification_scope||""))throw Error("Unsupported verification scope");
+ if(!m||m.schema!=="neuron7x.research-atlas.v1"||!Array.isArray(m.projects)||m.projects.length<1||m.projects.length>8)throw Error("Invalid schema or project count");
+ if(!validDate(m.verified_date)||m.verification_scope!==verificationScope)throw Error("Unsupported verification scope");
  const seen=new Set();
+ const references=new Map();
  for(const p of m.projects){
-  if(!/^[a-z][a-z0-9-]*$/.test(p.slug)||seen.has(p.slug)||!p.name||p.name.length>24)throw Error("Invalid project identity");
+  if(!p||typeof p.slug!=="string"||!/^[a-z][a-z0-9-]*$/.test(p.slug)||seen.has(p.slug)||typeof p.name!=="string"||!p.name||p.name.length>24)throw Error("Invalid project identity");
   seen.add(p.slug);
-  if(!/^neuron7x\/[A-Za-z0-9_.-]+$/.test(p.repository)||!/^[a-f0-9]{40}$/.test(p.commit))throw Error("Invalid source revision");
-  if(Object.keys(p.files||{}).sort().join()!==[...ROLES].sort().join())throw Error("Incomplete evidence roles");
+  if(typeof p.repository!=="string"||!/^neuron7x\/[A-Za-z0-9_.-]+$/.test(p.repository)||[".",".."].includes(p.repository.split("/")[1])||!sha(p.commit))throw Error("Invalid source revision");
+  if(Object.keys(p.files||{}).length!==ROLES.length||ROLES.some(role=>!Object.hasOwn(p.files||{},role)))throw Error("Incomplete evidence roles");
   for(const r of ROLES){
    const f=p.files[r];
-   if(!f||!/^[a-f0-9]{40}$/.test(f.blob)||!f.path||f.path.startsWith("/")||f.path.split("/").includes(".."))throw Error("Unsafe source reference");
+   if(!f||!sha(f.blob)||typeof f.path!=="string"||f.path.split("/").some(part=>["",".",".."].includes(part)))throw Error("Unsafe source reference");
+   const identity=JSON.stringify([p.repository,p.commit,f.path]);
+   if(references.has(identity)&&references.get(identity)!==f.blob)throw Error("Conflicting blob declarations");
+   references.set(identity,f.blob);
   }
  }
  return m;
@@ -77,7 +90,7 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);
  if(args.length>1||args.some(a=>a!=="--check"))throw Error("Usage: node tools/render_epistemic_signal.mjs [--check]");
- const manifest=JSON.parse(readFileSync(join(root,"research/atlas.json"),"utf8"));
+ const manifest=readJson(join(root,"research/atlas.json"),1024*1024);
  const result=images(manifest);
  let failures=0;
  for(const [name,content] of Object.entries(result)){

@@ -15,6 +15,7 @@ import html
 import json
 import re
 import sys
+from datetime import date
 from pathlib import Path
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -22,6 +23,7 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[1]
 ROLES = ("inspect", "reproduce", "falsify", "boundary")
 SHA = re.compile(r"[0-9a-f]{40}\Z")
+VERIFICATION_SCOPE = "Source references and blob identities verified. Project test suites and experiments were not executed for this profile update."
 CHALLENGE = "https://github.com/neuron7x/neuron7x/issues/new?template=research-challenge.yml"
 PALETTES = {
     "dark": {"bg": "#0d1117", "panel": "#10151c", "fg": "#e6edf3", "muted": "#a1aab5", "border": "#30363d", "red": "#f85149"},
@@ -29,26 +31,53 @@ PALETTES = {
 }
 
 
+def unique_json_object(pairs: list[tuple[str, object]]) -> dict:
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("DUPLICATE_JSON_KEY")
+        result[key] = value
+    return result
+
+
+def expected_blobs(data: dict) -> dict[tuple[str, str, str], str]:
+    expected = {}
+    for project in data["projects"]:
+        for role in ROLES:
+            ref = project["files"][role]
+            identity = (project["repository"], project["commit"], ref["path"])
+            if expected.setdefault(identity, ref["blob"]) != ref["blob"]:
+                raise ValueError(f"Conflicting blob declarations: {project['slug']} / {role}")
+    return expected
+
+
 def load_manifest() -> dict:
-    data = json.loads((ROOT / "research/atlas.json").read_text())
-    if data.get("schema") != "neuron7x.research-atlas.v1":
+    data = json.loads((ROOT / "research/atlas.json").read_text(encoding="utf-8"),
+                      object_pairs_hook=unique_json_object)
+    if not isinstance(data, dict) or data.get("schema") != "neuron7x.research-atlas.v1":
         raise ValueError("Unsupported atlas schema")
+    snapshot = data["verified_date"]
+    if date.fromisoformat(snapshot).isoformat() != snapshot or data["verification_scope"] != VERIFICATION_SCOPE:
+        raise ValueError("Unsupported verification scope or date")
     projects = data["projects"]
-    if not projects or len({p["slug"] for p in projects}) != len(projects):
+    if (not isinstance(projects, list) or not 1 <= len(projects) <= 8
+            or len({p["slug"] for p in projects}) != len(projects)):
         raise ValueError("Projects must have distinct slugs")
     for project in projects:
         if not re.fullmatch(r"[a-z][a-z0-9-]*", project["slug"]):
             raise ValueError("Invalid project anchor")
-        if not re.fullmatch(r"neuron7x/[A-Za-z0-9_.-]+", project["repository"]):
+        if (not re.fullmatch(r"neuron7x/[A-Za-z0-9_.-]+", project["repository"])
+                or project["repository"].split("/")[1] in {".", ".."}):
             raise ValueError("Unexpected repository")
         if not SHA.fullmatch(project["commit"]) or set(project["files"]) != set(ROLES):
             raise ValueError("Every route requires a pinned commit and file")
         for reference in project["files"].values():
-            path = Path(reference["path"])
-            if path.is_absolute() or ".." in path.parts or not SHA.fullmatch(reference["blob"]):
+            path = reference["path"]
+            if any(part in {"", ".", ".."} for part in path.split("/")) or not SHA.fullmatch(reference["blob"]):
                 raise ValueError("Invalid source reference")
         if len(project["subtitle"]) != 2:
             raise ValueError("Each project needs two concise visual labels")
+    expected_blobs(data)
     return data
 
 
@@ -226,21 +255,15 @@ body:
 
 
 def verify_remote(data: dict) -> None:
-    checked = set()
-    for p in data['projects']:
-        for role in ROLES:
-            ref = p['files'][role]
-            identity = (p['repository'], p['commit'], ref['path'])
-            if identity in checked:
-                continue
-            url = f"https://api.github.com/repos/{p['repository']}/contents/{quote(ref['path'], safe='/')}?ref={p['commit']}"
-            request = Request(url, headers={'Accept': 'application/vnd.github+json', 'User-Agent': 'neuron7x-research-atlas'})
-            with urlopen(request, timeout=20) as response:
-                observed = json.load(response)
-            if observed.get('sha') != ref['blob']:
-                raise ValueError(f"Source identity mismatch: {p['slug']} / {role}")
-            checked.add(identity)
-    print(f"Verified {len(checked)} distinct public Git blob references; no project tests executed.")
+    expected = expected_blobs(data)
+    for (repository, commit, path), blob in expected.items():
+        url = f"https://api.github.com/repos/{repository}/contents/{quote(path, safe='/')}?ref={commit}"
+        request = Request(url, headers={'Accept': 'application/vnd.github+json', 'User-Agent': 'neuron7x-research-atlas'})
+        with urlopen(request, timeout=20) as response:
+            observed = json.load(response)
+        if not isinstance(observed, dict) or observed.get("sha") != blob:
+            raise ValueError(f"Source identity mismatch: {repository} / {path}")
+    print(f"Verified {len(expected)} distinct public Git blob references; no project tests executed.")
 
 
 def main() -> int:
@@ -255,20 +278,18 @@ def main() -> int:
             prefix = '' if size == 'desktop' else size + '-'
             name = f"research-atlas-{prefix}{theme}.svg"
             outputs[ROOT / 'assets' / name] = svg(data, theme, size == 'mobile', size == 'compact')
-    mismatches = []
-    for path, content in outputs.items():
-        expected = content.encode()
-        if args.check:
-            if not path.exists() or path.read_bytes() != expected:
-                mismatches.append(str(path.relative_to(ROOT)))
-        else:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(expected)
-    if mismatches:
-        print('Generated files differ: ' + ', '.join(mismatches), file=sys.stderr)
-        return 1
+    if args.check:
+        mismatches = [str(path.relative_to(ROOT)) for path, content in outputs.items()
+                      if not path.exists() or path.read_bytes() != content.encode()]
+        if mismatches:
+            print('Generated files differ: ' + ', '.join(mismatches), file=sys.stderr)
+            return 1
     if args.verify_remote:
         verify_remote(data)
+    if not args.check:
+        for path, content in outputs.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content.encode())
     print(('Consistent' if args.check else 'Generated') + f": {len(outputs)} atlas files; {len(data['projects'])} source-pinned projects.")
     return 0
 
@@ -276,6 +297,6 @@ def main() -> int:
 if __name__ == '__main__':
     try:
         raise SystemExit(main())
-    except (ValueError, KeyError, OSError) as error:
+    except (ValueError, TypeError, KeyError, OSError) as error:
         print(str(error), file=sys.stderr)
         raise SystemExit(1) from error

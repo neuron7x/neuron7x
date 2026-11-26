@@ -6,6 +6,7 @@ export const PROTOCOL = "neuron7x.conditional-inference.v1";
 export const DEBT = Object.freeze(["candidate_class_completeness","intervention_fidelity","outcome_provenance","unmodelled_exogenous_mimickers"]);
 const ID = /^[A-Za-z][A-Za-z0-9:_-]{0,47}$/;
 const SHA = /^[0-9a-f]{40}$/;
+const SLUG = /^[a-z][a-z0-9-]*$/;
 const obj = x => x !== null && typeof x === "object" && !Array.isArray(x);
 function exact(value, expected) {
   if (!obj(value)) return false;
@@ -13,11 +14,12 @@ function exact(value, expected) {
   return actual.length === expected.length && expected.every(key => actual.includes(key));
 }
 const name = x => typeof x==="string" && ID.test(x);
+const sha = x => typeof x==="string" && SHA.test(x);
 const category = x => typeof x==="string" && /^[A-Za-z0-9_.:-]{1,32}$/.test(x);
 export function validate(x) {
   if(!exact(x,["schema","case_id","basis","source","budget","experiments","models","observations"])||x.schema!==PROTOCOL||!name(x.case_id)) throw Error("INVALID_CASE");
   if(!["synthetic","unverified_external"].includes(x.basis))throw Error("INVALID_BASIS");
-  if(!exact(x.source,["project","commit"])||!name(x.source.project)||!SHA.test(x.source.commit))throw Error("INVALID_SOURCE");
+  if(!exact(x.source,["project","commit"])||!name(x.source.project)||!sha(x.source.commit))throw Error("INVALID_SOURCE");
   if(!Number.isSafeInteger(x.budget)||x.budget<1||x.budget>32)throw Error("INVALID_BUDGET");
   if(!Array.isArray(x.experiments)||x.experiments.length<2||x.experiments.length>8)throw Error("INVALID_EXPERIMENTS");
   const ids=new Set(); let passive=0,active=0;
@@ -45,12 +47,22 @@ export function validate(x) {
   }
   return x;
 }
+function pinnedProjects(atlas) {
+  if(!obj(atlas)||atlas.schema!=="neuron7x.research-atlas.v1"||
+    !Array.isArray(atlas.projects)||atlas.projects.length<1||atlas.projects.length>8)throw Error("INVALID_ATLAS");
+  const pins = new Map();
+  for(const project of atlas.projects){
+    if(!obj(project)||typeof project.slug!=="string"||!SLUG.test(project.slug)||
+      !sha(project.commit)||pins.has(project.slug))throw Error("INVALID_ATLAS");
+    pins.set(project.slug,project.commit);
+  }
+  return pins;
+}
 export function infer(x,atlas,policy="pairwise") {
   validate(x);
   if(policy!=="pairwise"&&policy!==EXACT_TWO_STEP)throw Error("INVALID_INTERVENTION_POLICY");
   const exactPlanning=policy===EXACT_TWO_STEP;
-  if(!obj(atlas)||atlas.schema!=="neuron7x.research-atlas.v1"||!Array.isArray(atlas.projects))throw Error("INVALID_ATLAS");
-  const pinned=atlas.projects.some(p=>p.slug===x.source.project&&p.commit===x.source.commit);
+  const pinned=pinnedProjects(atlas).get(x.source.project)===x.source.commit;
   const base={protocol:PROTOCOL,case_id:x.case_id,basis:x.basis,
     source_status:pinned?"PINNED_REFERENCE_ONLY":"SOURCE_MISMATCH",
     causal_authority:false,independent_replication:false,unresolved_assumptions:DEBT.slice()};

@@ -27,6 +27,12 @@ A pinned case includes `intervention_plan.horizon`, `selected_models` and `inter
 
 The [categorical example](./inference/cases/adaptive_categorical.json) has five models. Pair-count greedy selects three within two steps. The exact policy chooses A, then B for outcome 0 or C for outcome 1, and conditionally selects all five.
 
+## Input and replay
+
+The CLI accepts regular UTF-8 JSON files up to 64 KiB per case and 1 MiB for the local atlas. Duplicate decoded object keys are invalid. The atlas binds each project ID to one string commit SHA. `--check` compares the five baseline traces and the exact categorical trace byte-for-byte.
+
+A case declares a time-invariant prediction for each model and intervention. Record order carries no information. Replaying a plan requires the same declarations and an updated list of observations within budget. If an intervention can change the response to a later intervention, define a different model and experiment protocol for that history-dependent process.
+
 ## Run offline — no Actions, npm, cloud or tokens
 
     node tools/run_inference.mjs inference/cases/passive_twins.json

@@ -253,6 +253,7 @@ test("CLI conformance exits nonzero when a reference trace differs", t => {
     "inference/results",
     "research/atlas.json",
     "tools/run_inference.mjs",
+    "tools/read_json.mjs",
   ]) {
     cpSync(join(root, file), join(copy, file), { recursive: true });
   }
@@ -260,11 +261,69 @@ test("CLI conformance exits nonzero when a reference trace differs", t => {
   const run = () => spawnSync(process.execPath, [join(copy, "tools/run_inference.mjs"), "--check"], { encoding: "utf8" });
   const baseline = run();
   assert.equal(baseline.status, 0, baseline.stderr);
-  assert.match(baseline.stdout, /5\/5 snapshots match/);
+  assert.match(baseline.stdout, /6\/6 snapshots match/);
 
-  writeFileSync(join(copy, "inference/results/passive_twins.json"), "{}\n");
+  writeFileSync(join(copy, "inference/results/adaptive_categorical.json"), "{}\n");
   const changed = run();
   assert.equal(changed.status, 1);
-  assert.match(changed.stderr, /SNAPSHOT_MISMATCH passive_twins/);
+  assert.match(changed.stderr, /SNAPSHOT_MISMATCH adaptive_categorical/);
   assert.equal(changed.stdout, "");
+});
+
+test("CLI rejects duplicate decoded JSON keys, non-UTF-8 and oversized input", t => {
+  const copy = mkdtempSync(join(tmpdir(), "inference-input-"));
+  t.after(() => rmSync(copy, { recursive: true, force: true }));
+  const fixture = join(root, "inference/cases/interventional_split.json");
+  const raw = readFileSync(fixture, "utf8");
+  const badInput = join(copy, "case.json");
+  const cases = [
+    [raw.replace('"outcome": "ONE"', '"outcome": "ONE", "o\\u0075tcome": "ZERO"'), "DUPLICATE_JSON_KEY"],
+    [raw.replace('"outcome": "ONE"', '"outcome": "ONE", "outcome": "ZERO"'), "DUPLICATE_JSON_KEY"],
+    [raw.padEnd(65537, " "), "JSON_INPUT_TOO_LARGE"],
+    [Buffer.concat([Buffer.from(raw), Buffer.from([0xff])]), "INVALID_UTF8_INPUT"],
+  ];
+  for (const [contents, message] of cases) {
+    assert.notEqual(contents, raw);
+    writeFileSync(badInput, contents);
+    for (const flags of [[], ["--exact-two-step"]]) {
+      const result = spawnSync(process.execPath, [join(root, "tools/run_inference.mjs"), ...flags, badInput], {
+        encoding: "utf8", timeout: 1000,
+      });
+      assert.equal(result.status, 1, result.stderr);
+      assert.equal(result.stdout, "");
+      assert.equal(result.stderr.trim(), message);
+    }
+  }
+  const escaped = raw.replaceAll('"outcome"', '"o\\u0075tcome"').padEnd(65536, " ");
+  writeFileSync(badInput, escaped);
+  const accepted = spawnSync(process.execPath, [join(root, "tools/run_inference.mjs"), badInput], { encoding: "utf8" });
+  assert.equal(accepted.status, 0, accepted.stderr);
+  assert.equal(JSON.parse(accepted.stdout).verdict, "CONDITIONAL_MODEL_SELECTION");
+
+  if (process.platform === "linux") {
+    const nonRegular = spawnSync(process.execPath, [join(root, "tools/run_inference.mjs"), "/dev/zero"], {
+      encoding: "utf8", timeout: 1000,
+    });
+    assert.equal(nonRegular.status, 1, nonRegular.stderr);
+    assert.equal(nonRegular.stdout, "");
+    assert.match(nonRegular.stderr, /JSON_INPUT_NOT_REGULAR_FILE/);
+  }
+});
+
+test("source identifiers are typed and atlas slugs bind to one revision", () => {
+  const c = get("interventional_split");
+  const wrong = cp(atlas);
+  const shared = [c.source.commit];
+  wrong.projects.find(project => project.slug === c.source.project).commit = shared;
+  c.source.commit = shared;
+  assert.throws(() => infer(c, wrong), /INVALID_SOURCE/);
+  c.source.commit = shared[0];
+  assert.throws(() => infer(c, wrong), /INVALID_ATLAS/);
+
+  const duplicated = cp(atlas);
+  const prior = duplicated.projects.find(project => project.slug === c.source.project);
+  duplicated.projects.push({ ...prior, commit: "a".repeat(40) });
+  for (const policy of ["pairwise", EXACT_TWO_STEP]) {
+    assert.throws(() => infer(c, duplicated, policy), /INVALID_ATLAS/);
+  }
 });
