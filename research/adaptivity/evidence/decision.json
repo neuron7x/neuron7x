@@ -1,0 +1,227 @@
+{
+  "schema": "a01.decision.v1",
+  "input_sha256": "07e6ad3e7e603207954636cd9ea5c1c1e099fb2f1d2c194bc94dfb37f21c1c59",
+  "trace_sha256": "e3d58977dddc2398e1e4c184d5382e2f96d438a930cfa538217aca7b828d1217",
+  "trials_per_policy": 2560,
+  "selections": {
+    "exact": 957,
+    "fixed": 949,
+    "pairs": 951,
+    "singleton": 944,
+    "bound": 957,
+    "fullBound": 990
+  },
+  "max_accesses_per_trial": {
+    "exact": 374,
+    "fixed": 344,
+    "pairs": 139,
+    "singleton": 139
+  },
+  "delta": "1/20",
+  "contrasts": {
+    "fixed": {
+      "mean": "1/320",
+      "median_interval": [
+        "0",
+        "0"
+      ]
+    },
+    "pairs": {
+      "mean": "3/1280",
+      "median_interval": [
+        "0",
+        "0"
+      ]
+    },
+    "singleton": {
+      "mean": "13/2560",
+      "median_interval": [
+        "0",
+        "1/128"
+      ]
+    }
+  },
+  "decision": "REFUTED_PRACTICAL_ADVANTAGE_A01",
+  "families": [
+    {
+      "path": "arithmetic/adder.blif",
+      "exact": 101,
+      "fixed": 101,
+      "pairs": 100,
+      "singleton": 100,
+      "bound": 101,
+      "fullBound": 103
+    },
+    {
+      "path": "arithmetic/bar.blif",
+      "exact": 86,
+      "fixed": 86,
+      "pairs": 85,
+      "singleton": 85,
+      "bound": 86,
+      "fullBound": 89
+    },
+    {
+      "path": "arithmetic/div.blif",
+      "exact": 14,
+      "fixed": 14,
+      "pairs": 14,
+      "singleton": 14,
+      "bound": 14,
+      "fullBound": 14
+    },
+    {
+      "path": "arithmetic/hyp.blif",
+      "exact": 61,
+      "fixed": 61,
+      "pairs": 61,
+      "singleton": 61,
+      "bound": 61,
+      "fullBound": 63
+    },
+    {
+      "path": "arithmetic/log2.blif",
+      "exact": 64,
+      "fixed": 64,
+      "pairs": 64,
+      "singleton": 64,
+      "bound": 64,
+      "fullBound": 64
+    },
+    {
+      "path": "arithmetic/max.blif",
+      "exact": 34,
+      "fixed": 34,
+      "pairs": 34,
+      "singleton": 34,
+      "bound": 34,
+      "fullBound": 36
+    },
+    {
+      "path": "arithmetic/multiplier.blif",
+      "exact": 93,
+      "fixed": 91,
+      "pairs": 93,
+      "singleton": 91,
+      "bound": 93,
+      "fullBound": 98
+    },
+    {
+      "path": "arithmetic/sin.blif",
+      "exact": 66,
+      "fixed": 66,
+      "pairs": 63,
+      "singleton": 64,
+      "bound": 66,
+      "fullBound": 68
+    },
+    {
+      "path": "arithmetic/sqrt.blif",
+      "exact": 42,
+      "fixed": 42,
+      "pairs": 42,
+      "singleton": 42,
+      "bound": 42,
+      "fullBound": 43
+    },
+    {
+      "path": "arithmetic/square.blif",
+      "exact": 85,
+      "fixed": 85,
+      "pairs": 85,
+      "singleton": 85,
+      "bound": 85,
+      "fullBound": 85
+    },
+    {
+      "path": "random_control/arbiter.blif",
+      "exact": 6,
+      "fixed": 6,
+      "pairs": 6,
+      "singleton": 6,
+      "bound": 6,
+      "fullBound": 6
+    },
+    {
+      "path": "random_control/cavlc.blif",
+      "exact": 24,
+      "fixed": 24,
+      "pairs": 24,
+      "singleton": 24,
+      "bound": 24,
+      "fullBound": 25
+    },
+    {
+      "path": "random_control/ctrl.blif",
+      "exact": 68,
+      "fixed": 68,
+      "pairs": 67,
+      "singleton": 68,
+      "bound": 68,
+      "fullBound": 72
+    },
+    {
+      "path": "random_control/dec.blif",
+      "exact": 62,
+      "fixed": 62,
+      "pairs": 62,
+      "singleton": 62,
+      "bound": 62,
+      "fullBound": 64
+    },
+    {
+      "path": "random_control/i2c.blif",
+      "exact": 39,
+      "fixed": 39,
+      "pairs": 39,
+      "singleton": 39,
+      "bound": 39,
+      "fullBound": 41
+    },
+    {
+      "path": "random_control/int2float.blif",
+      "exact": 23,
+      "fixed": 23,
+      "pairs": 23,
+      "singleton": 23,
+      "bound": 23,
+      "fullBound": 25
+    },
+    {
+      "path": "random_control/mem_ctrl.blif",
+      "exact": 15,
+      "fixed": 15,
+      "pairs": 15,
+      "singleton": 15,
+      "bound": 15,
+      "fullBound": 16
+    },
+    {
+      "path": "random_control/priority.blif",
+      "exact": 47,
+      "fixed": 41,
+      "pairs": 47,
+      "singleton": 40,
+      "bound": 47,
+      "fullBound": 49
+    },
+    {
+      "path": "random_control/router.blif",
+      "exact": 10,
+      "fixed": 10,
+      "pairs": 10,
+      "singleton": 10,
+      "bound": 10,
+      "fullBound": 10
+    },
+    {
+      "path": "random_control/voter.blif",
+      "exact": 17,
+      "fixed": 17,
+      "pairs": 17,
+      "singleton": 17,
+      "bound": 17,
+      "fullBound": 19
+    }
+  ]
+}

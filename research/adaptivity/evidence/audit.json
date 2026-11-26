@@ -1,0 +1,115 @@
+{
+  "schema": "a01.audit.v1",
+  "primary_decision": "REFUTED_PRACTICAL_ADVANTAGE_A01",
+  "primary_trace_sha256": "e3d58977dddc2398e1e4c184d5382e2f96d438a930cfa538217aca7b828d1217",
+  "ec2_trace_sha256": "db4df8a30eca51303d47e2fc2ff03845ef26687efc4f9dc756022cc46f7a7c2a",
+  "ec2_selections": 951,
+  "mean": "3/1280",
+  "median_interval": [
+    "0",
+    "0"
+  ],
+  "ec2_decision": "REFUTED_PRACTICAL_ADVANTAGE_A01_L",
+  "families": [
+    {
+      "path": "arithmetic/adder.blif",
+      "ec2": 100,
+      "delta": "1/128"
+    },
+    {
+      "path": "arithmetic/bar.blif",
+      "ec2": 85,
+      "delta": "1/128"
+    },
+    {
+      "path": "arithmetic/div.blif",
+      "ec2": 14,
+      "delta": "0"
+    },
+    {
+      "path": "arithmetic/hyp.blif",
+      "ec2": 61,
+      "delta": "0"
+    },
+    {
+      "path": "arithmetic/log2.blif",
+      "ec2": 64,
+      "delta": "0"
+    },
+    {
+      "path": "arithmetic/max.blif",
+      "ec2": 34,
+      "delta": "0"
+    },
+    {
+      "path": "arithmetic/multiplier.blif",
+      "ec2": 93,
+      "delta": "0"
+    },
+    {
+      "path": "arithmetic/sin.blif",
+      "ec2": 63,
+      "delta": "3/128"
+    },
+    {
+      "path": "arithmetic/sqrt.blif",
+      "ec2": 42,
+      "delta": "0"
+    },
+    {
+      "path": "arithmetic/square.blif",
+      "ec2": 85,
+      "delta": "0"
+    },
+    {
+      "path": "random_control/arbiter.blif",
+      "ec2": 6,
+      "delta": "0"
+    },
+    {
+      "path": "random_control/cavlc.blif",
+      "ec2": 24,
+      "delta": "0"
+    },
+    {
+      "path": "random_control/ctrl.blif",
+      "ec2": 67,
+      "delta": "1/128"
+    },
+    {
+      "path": "random_control/dec.blif",
+      "ec2": 62,
+      "delta": "0"
+    },
+    {
+      "path": "random_control/i2c.blif",
+      "ec2": 39,
+      "delta": "0"
+    },
+    {
+      "path": "random_control/int2float.blif",
+      "ec2": 23,
+      "delta": "0"
+    },
+    {
+      "path": "random_control/mem_ctrl.blif",
+      "ec2": 15,
+      "delta": "0"
+    },
+    {
+      "path": "random_control/priority.blif",
+      "ec2": 47,
+      "delta": "0"
+    },
+    {
+      "path": "random_control/router.blif",
+      "ec2": 10,
+      "delta": "0"
+    },
+    {
+      "path": "random_control/voter.blif",
+      "ec2": 17,
+      "delta": "0"
+    }
+  ]
+}
