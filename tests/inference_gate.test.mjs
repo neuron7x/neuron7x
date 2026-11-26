@@ -1,6 +1,8 @@
 import test from "node:test";
+import { spawnSync } from "node:child_process";
 import assert from "node:assert/strict";
-import {readFileSync} from "node:fs";
+import {cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from "node:fs";
+import {tmpdir} from "node:os";
 import {resolve,join,dirname} from "node:path";
 import {fileURLToPath} from "node:url";
 import {PROTOCOL,DEBT,EXACT_TWO_STEP,validate,infer} from "../inference/kernel.mjs";
@@ -147,4 +149,122 @@ test("exact policy abstains within its horizon and fails closed at the existing 
   assert.equal(refuted.verdict, "MODEL_CLASS_REFUTED");
   assert.equal(refuted.next_intervention, null);
   assert.throws(() => infer(c, atlas, "UNKNOWN"), /INVALID_INTERVENTION_POLICY/);
+});
+
+test("prediction columns are exact keys, even when an extra name joins missing columns", () => {
+  const c = get("adaptive_categorical");
+  for (const model of c.models) {
+    model.predictions["A|B"] = model.predictions.A;
+    delete model.predictions.A;
+    delete model.predictions.B;
+  }
+  for (const policy of ["pairwise", EXACT_TWO_STEP]) {
+    assert.throws(() => infer(c, atlas, policy), /INCOMPLETE_PREDICTIONS/);
+  }
+});
+
+test("source binding requires both the declared project and its pinned commit", () => {
+  const c = get("passive_twins");
+  c.source.project = "different_project";
+  for (const policy of ["pairwise", EXACT_TWO_STEP]) {
+    const result = infer(c, atlas, policy);
+    assert.equal(result.reason, "SOURCE_MISMATCH");
+    assert.equal(result.next_intervention, null);
+    assert.equal(result.causal_authority, false);
+    assert.ok(!Object.hasOwn(result, "intervention_plan"));
+  }
+});
+
+test("an observed constant intervention grants no witness", () => {
+  const c = exactCase(["000", "000"], 4);
+  c.models[1].predictions.observe = "ONE";
+  c.observations.push({ experiment: "A", outcome: "0" });
+  const result = infer(c, atlas, EXACT_TWO_STEP);
+  assert.equal(result.verdict, "ABSTAIN");
+  assert.equal(result.reason, "NO_DISCRIMINATING_INTERVENTION_OBSERVED");
+  assert.equal(result.next_intervention, null);
+  assert.deepEqual(result.intervention_plan, { horizon: 2, selected_models: 0, intervention_uses: 0 });
+  assert.equal(infer(c, atlas).verdict, "ABSTAIN");
+});
+
+test("exact policy ranks by total cost before lexical tie resolution", () => {
+  const c = exactCase(["000", "011", "122", "133"]);
+  c.experiments.reverse();
+  const result = infer(c, atlas, EXACT_TWO_STEP);
+  assert.equal(result.next_intervention, "B");
+  assert.deepEqual(result.intervention_plan, { horizon: 2, selected_models: 4, intervention_uses: 4 });
+});
+
+test("recorded interventions and unused admissible probes bound the horizon", () => {
+  const c = exactCase(["000", "000", "010", "011", "100"], 3);
+  c.observations.push({ experiment: "A", outcome: "0" });
+  const one = infer(c, atlas, EXACT_TWO_STEP);
+  assert.equal(one.next_intervention, "C");
+  assert.deepEqual(one.intervention_plan, { horizon: 1, selected_models: 1, intervention_uses: 4 });
+  c.budget = 4;
+  const two = infer(c, atlas, EXACT_TWO_STEP);
+  assert.equal(two.next_intervention, "B");
+  assert.deepEqual(two.intervention_plan, { horizon: 2, selected_models: 2, intervention_uses: 6 });
+
+  const available = exactCase(["0", "1"], 3);
+  const clipped = infer(available, atlas, EXACT_TWO_STEP);
+  assert.equal(clipped.next_intervention, "A");
+  assert.equal(clipped.intervention_plan.horizon, 1);
+  available.observations.push({ experiment: "A", outcome: "0" });
+  const done = infer(available, atlas, EXACT_TWO_STEP);
+  assert.equal(done.next_intervention, null);
+  assert.equal(done.intervention_plan.horizon, 0);
+});
+
+test("CLI dispatches the exact policy and rejects malformed invocations", () => {
+  const cli = join(root, "tools/run_inference.mjs");
+  const fixture = join(root, "inference/cases/adaptive_categorical.json");
+  const run = (...args) => spawnSync(process.execPath, [cli, ...args], { encoding: "utf8" });
+  const exact = run("--exact-two-step", fixture);
+  assert.equal(exact.status, 0, exact.stderr);
+  const planned = JSON.parse(exact.stdout);
+  assert.equal(planned.intervention_policy, EXACT_TWO_STEP);
+  assert.equal(planned.next_intervention, "A");
+  assert.equal(planned.verdict, "ABSTAIN");
+  assert.equal(planned.intervention_plan.selected_models, 5);
+  const legacy = run(fixture);
+  assert.equal(legacy.status, 0, legacy.stderr);
+  const greedy = JSON.parse(legacy.stdout);
+  assert.equal(greedy.next_intervention, "C");
+  assert.ok(!Object.hasOwn(greedy, "intervention_policy"));
+  for (const args of [["--exact-two-step"], ["--unknown", fixture]]) {
+    const invalid = run(...args);
+    assert.equal(invalid.status, 2);
+    assert.equal(invalid.stdout, "");
+    assert.match(invalid.stderr, /Usage/);
+  }
+});
+
+test("CLI conformance exits nonzero when a reference trace differs", t => {
+  const copy = mkdtempSync(join(tmpdir(), "inference-conformance-"));
+  t.after(() => rmSync(copy, { recursive: true, force: true }));
+  for (const directory of ["inference", "research", "tools"]) {
+    mkdirSync(join(copy, directory));
+  }
+  for (const file of [
+    "inference/kernel.mjs",
+    "inference/two_step_policy.mjs",
+    "inference/cases",
+    "inference/results",
+    "research/atlas.json",
+    "tools/run_inference.mjs",
+  ]) {
+    cpSync(join(root, file), join(copy, file), { recursive: true });
+  }
+
+  const run = () => spawnSync(process.execPath, [join(copy, "tools/run_inference.mjs"), "--check"], { encoding: "utf8" });
+  const baseline = run();
+  assert.equal(baseline.status, 0, baseline.stderr);
+  assert.match(baseline.stdout, /5\/5 snapshots match/);
+
+  writeFileSync(join(copy, "inference/results/passive_twins.json"), "{}\n");
+  const changed = run();
+  assert.equal(changed.status, 1);
+  assert.match(changed.stderr, /SNAPSHOT_MISMATCH passive_twins/);
+  assert.equal(changed.stdout, "");
 });

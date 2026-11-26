@@ -7,7 +7,11 @@ export const DEBT = Object.freeze(["candidate_class_completeness","intervention_
 const ID = /^[A-Za-z][A-Za-z0-9:_-]{0,47}$/;
 const SHA = /^[0-9a-f]{40}$/;
 const obj = x => x !== null && typeof x === "object" && !Array.isArray(x);
-const exact = (x,ks) => obj(x) && Object.keys(x).sort().join("|")===ks.slice().sort().join("|");
+function exact(value, expected) {
+  if (!obj(value)) return false;
+  const actual = Object.keys(value);
+  return actual.length === expected.length && expected.every(key => actual.includes(key));
+}
 const name = x => typeof x==="string" && ID.test(x);
 const category = x => typeof x==="string" && /^[A-Za-z0-9_.:-]{1,32}$/.test(x);
 export function validate(x) {
@@ -30,7 +34,7 @@ export function validate(x) {
   for(const m of x.models){
     if(!exact(m,["id","predictions"])||!name(m.id)||models.has(m.id))throw Error("INVALID_MODEL");
     models.add(m.id);
-    if(!obj(m.predictions)||Object.keys(m.predictions).sort().join("|")!==[...ids].sort().join("|"))throw Error("INCOMPLETE_PREDICTIONS");
+    if(!exact(m.predictions,[...ids]))throw Error("INCOMPLETE_PREDICTIONS");
     if(!Object.values(m.predictions).every(category))throw Error("INVALID_PREDICTION");
   }
   if(!Array.isArray(x.observations)||x.observations.length>x.budget)throw Error("BUDGET_EXCEEDED");
