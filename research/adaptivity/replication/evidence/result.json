@@ -1,0 +1,194 @@
+{
+  "schema": "a02.result.v1",
+  "inputs_sha256": "b807a13b52cfae4fc5b7bbe718e44ec0626da9b197071c1231e737fef5105589",
+  "traces_sha256": "b840fecf4a4d115272667a3c794a1d2a422e8559f01fa3b081174fefe47531a6",
+  "decision": "INCONCLUSIVE_A02",
+  "delta": "1/20",
+  "trials_per_policy": 1408,
+  "max_accesses_per_trial": {
+    "exact": 374,
+    "fixed": 344,
+    "pairs": 139,
+    "singleton": 139,
+    "ec2": 139
+  },
+  "circuits": {
+    "c17": {
+      "exact": 78,
+      "fixed": 67,
+      "pairs": 71,
+      "singleton": 68,
+      "ec2": 69,
+      "bound": 78,
+      "fullBound": 80
+    },
+    "c432": {
+      "exact": 37,
+      "fixed": 37,
+      "pairs": 35,
+      "singleton": 36,
+      "ec2": 35,
+      "bound": 37,
+      "fullBound": 43
+    },
+    "c499": {
+      "exact": 51,
+      "fixed": 51,
+      "pairs": 50,
+      "singleton": 51,
+      "ec2": 50,
+      "bound": 51,
+      "fullBound": 57
+    },
+    "c880": {
+      "exact": 74,
+      "fixed": 71,
+      "pairs": 71,
+      "singleton": 68,
+      "ec2": 71,
+      "bound": 74,
+      "fullBound": 77
+    },
+    "c1355": {
+      "exact": 58,
+      "fixed": 57,
+      "pairs": 58,
+      "singleton": 56,
+      "ec2": 58,
+      "bound": 58,
+      "fullBound": 61
+    },
+    "c1908": {
+      "exact": 68,
+      "fixed": 66,
+      "pairs": 68,
+      "singleton": 66,
+      "ec2": 68,
+      "bound": 68,
+      "fullBound": 69
+    },
+    "c2670": {
+      "exact": 44,
+      "fixed": 43,
+      "pairs": 44,
+      "singleton": 42,
+      "ec2": 44,
+      "bound": 44,
+      "fullBound": 47
+    },
+    "c3540": {
+      "exact": 45,
+      "fixed": 45,
+      "pairs": 45,
+      "singleton": 45,
+      "ec2": 45,
+      "bound": 45,
+      "fullBound": 45
+    },
+    "c5315": {
+      "exact": 53,
+      "fixed": 53,
+      "pairs": 53,
+      "singleton": 53,
+      "ec2": 53,
+      "bound": 53,
+      "fullBound": 55
+    },
+    "c6288": {
+      "exact": 98,
+      "fixed": 96,
+      "pairs": 94,
+      "singleton": 92,
+      "ec2": 94,
+      "bound": 98,
+      "fullBound": 99
+    },
+    "c7552": {
+      "exact": 56,
+      "fixed": 55,
+      "pairs": 56,
+      "singleton": 55,
+      "ec2": 56,
+      "bound": 56,
+      "fullBound": 59
+    }
+  },
+  "contrasts": {
+    "fixed": {
+      "family_effects": {
+        "c17": "11/128",
+        "c432": "0",
+        "c880": "3/128",
+        "c1908": "1/64",
+        "c2670": "1/128",
+        "c3540": "0",
+        "c5315": "0",
+        "c6288": "1/64",
+        "c7552": "1/128",
+        "c499+c1355": "1/256"
+      },
+      "mean": "41/2560",
+      "interval": [
+        "0",
+        "11/128"
+      ]
+    },
+    "pairs": {
+      "family_effects": {
+        "c17": "7/128",
+        "c432": "1/64",
+        "c880": "3/128",
+        "c1908": "0",
+        "c2670": "0",
+        "c3540": "0",
+        "c5315": "0",
+        "c6288": "1/32",
+        "c7552": "0",
+        "c499+c1355": "1/256"
+      },
+      "mean": "33/2560",
+      "interval": [
+        "0",
+        "7/128"
+      ]
+    },
+    "singleton": {
+      "family_effects": {
+        "c17": "5/64",
+        "c432": "1/128",
+        "c880": "3/64",
+        "c1908": "1/64",
+        "c2670": "1/64",
+        "c3540": "0",
+        "c5315": "0",
+        "c6288": "3/64",
+        "c7552": "1/128",
+        "c499+c1355": "1/128"
+      },
+      "mean": "29/1280",
+      "interval": [
+        "0",
+        "5/64"
+      ]
+    },
+    "ec2": {
+      "family_effects": {
+        "c17": "9/128",
+        "c432": "1/64",
+        "c880": "3/128",
+        "c1908": "0",
+        "c2670": "0",
+        "c3540": "0",
+        "c5315": "0",
+        "c6288": "1/32",
+        "c7552": "0",
+        "c499+c1355": "1/256"
+      },
+      "mean": "37/2560",
+      "interval": [
+        "0",
+        "9/128"
+      ]
+    }
+  }
+}
