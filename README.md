@@ -21,6 +21,8 @@ of each claim.
 
 ### Research
 
+[Research manifesto and 90-day protocol (Ukrainian)](./RESEARCH_MANIFESTO.uk.md)
+
 <p align="center">
   <a href="./RESEARCH_ATLAS.md">
     <picture>
