@@ -293,6 +293,42 @@ def verify(root: Path) -> None:
         mutate(root, "inference/two_step_policy.mjs",
                lambda source: source.replace(planner_loop, altered_loop, 1), reject_suboptimal_forecast)
 
+    successor_test = "dual anchors distinguish two individually valid successors of the same parent"
+
+    def reject_detached_successor() -> None:
+        command = [*node, f"--test-name-pattern=^{successor_test}$", "tests/inference_receipt.test.mjs"]
+        require("Dual anchors reject a valid sibling substitution", command, root, 1, lambda result: (
+            re.search(rf"^not ok [0-9]+ - {successor_test}$", result.stdout, re.MULTILINE) is not None
+            and "Missing expected exception" in result.stdout and "ERR_ASSERTION" in result.stdout
+        ))
+
+    mutate(root, "inference/receipt.mjs",
+           lambda source: source.replace(b"if (nextDigest !== undefined) requireAnchor(expected, nextDigest);", b""),
+           reject_detached_successor)
+
+    proof_controls = [
+        ("Git tree hash rejects an unrelated altered entry", "tools/render_research_atlas.py",
+         b'if hashlib.sha1(header + payload, usedforsecurity=False).hexdigest() != expected_sha:',
+         b"if False:", "test_research_atlas.py",
+         "test_tree_hash_matches_git_sorting_and_detects_unrelated_entry_changes", "ValueError not raised"),
+        ("Archive index rejects hidden tracked files", "tools/verify_release.py",
+         b"if pending:", b"if False:", "test_verify_release.py",
+         "test_archive_rejects_tracked_file_hidden_by_local_attributes", "VerificationError not raised"),
+        ("Release entrypoint rejects a stale verifier", "tools/verify_release.py",
+         b"if not archived.is_file() or archived.read_bytes() != Path(__file__).resolve().read_bytes():",
+         b"if not archived.is_file():", "test_verify_release.py",
+         "test_runner_must_match_the_revision", "VerificationError not raised"),
+    ]
+
+    for name, source_path, original, altered, suite, case, diagnostic in proof_controls:
+        def reject_failed_proof() -> None:
+            command = [*python, "-m", "unittest", "discover", "-s", "tests", "-p", suite]
+            require(name, command, root, 1, lambda result: (
+                f"FAIL: {case}" in result.stderr and diagnostic in result.stderr
+            ))
+
+        mutate(root, source_path, lambda source: source.replace(original, altered, 1), reject_failed_proof)
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
