@@ -12,6 +12,9 @@ The `verified_date` is the date of the source audit recorded in the manifest. It
 
 ## Verification and maintenance
 
+Run `python3 tools/verify_release.py <commit>` to check the exact local Git revision in a clean archive. It runs both test suites, checks inference traces and generated artifacts, and requires known failures after controlled changes. The command prints the resolved SHA and the checks actually executed. Remote Git blob verification is a separate read-only check via `python3 tools/render_research_atlas.py --check --verify-remote`. It checks the returned path, file type, decoded size and Git blob hash against the pinned reference.
+
+
 ```bash
 node tools/render_epistemic_signal.mjs
 node tools/render_epistemic_signal.mjs --check

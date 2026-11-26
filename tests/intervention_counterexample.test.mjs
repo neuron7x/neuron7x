@@ -1,0 +1,227 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+import { EXACT_TWO_STEP, infer } from "../inference/kernel.mjs";
+
+const read = path => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
+const atlas = read("../research/atlas.json");
+const { source } = read("../inference/cases/passive_twins.json");
+const interventions = ["A", "B", "C", "D"];
+const signatures = ["0001", "0010", "0100", "1101", "1100", "1110"];
+const experiments = [
+  { id: "observe", kind: "observation" },
+  ...interventions.map(id => ({ id, kind: "intervention" })),
+];
+const makeModels = rows => rows.map((signature, index) => ({
+  id: `M${index + 1}`,
+  predictions: {
+    observe: "0",
+    ...Object.fromEntries(interventions.map((id, column) => [id, signature[column]])),
+  },
+}));
+
+function replay(models, target, policy) {
+  const input = {
+    schema: "neuron7x.conditional-inference.v1",
+    case_id: "two_intervention_counterexample",
+    basis: "synthetic",
+    source,
+    budget: 3,
+    experiments,
+    models,
+    observations: [{ experiment: "observe", outcome: "0" }],
+  };
+  const queries = [];
+  let initial;
+  while (true) {
+    const result = infer(input, atlas, policy);
+    initial ??= result;
+    assert.equal(result.causal_authority, false);
+    assert.equal(result.independent_replication, false);
+    if (!result.next_intervention) return { result, queries, initial };
+    const experiment = result.next_intervention;
+    queries.push(experiment);
+    input.observations.push({ experiment, outcome: target.predictions[experiment] });
+  }
+}
+
+// Count singleton leaves in the best possible adaptive tree with the given budget.
+function optimalCount(candidates, remaining, budget) {
+  if (candidates.length <= 1) return candidates.length;
+  if (budget === 0 || remaining.length === 0) return 0;
+  return Math.max(...remaining.map(id => {
+    const other = remaining.filter(candidate => candidate !== id);
+    return ["0", "1"].reduce((total, outcome) => total +
+      optimalCount(candidates.filter(model => model.predictions[id] === outcome), other, budget - 1), 0);
+  }));
+}
+
+test("maximum immediate pair separation can lose identifications under a fixed budget", () => {
+  const models = makeModels(signatures);
+  assert.equal(new Set(signatures).size, models.length);
+  let identified = 0;
+  for (const target of models) {
+    const { result, queries } = replay(models, target);
+    assert.equal(queries[0], "A");
+    assert.ok(queries.length <= 2);
+    if (result.verdict === "CONDITIONAL_MODEL_SELECTION") {
+      assert.deepEqual(result.survivors, [target.id]);
+      identified++;
+    } else {
+      assert.equal(result.verdict, "ABSTAIN");
+      assert.ok(result.survivors.includes(target.id));
+    }
+  }
+  const oracle = optimalCount(models, interventions, 2);
+  const fixed = new Set(models
+    .map(model => model.predictions.B + model.predictions.C)
+    .filter((signature, _, all) => all.indexOf(signature) === all.lastIndexOf(signature)));
+  const fixedCount = fixed.size;
+  assert.deepEqual([identified, fixedCount, oracle], [2, 3, 3]);
+});
+
+function* combinations(values, size, start = 0) {
+  if (size === 0) {
+    yield [];
+    return;
+  }
+  for (let i = start; i <= values.length - size; i++) {
+    for (const tail of combinations(values, size - 1, i + 1)) {
+      yield [values[i], ...tail];
+    }
+  }
+}
+
+// Each tied choice may be resolved separately after each observed outcome.
+function greedyCounts(candidates, remaining, budget) {
+  if (candidates.length <= 1) {
+    return { min: candidates.length, max: candidates.length, lex: candidates.length };
+  }
+  if (budget === 0 || remaining.length === 0) return { min: 0, max: 0, lex: 0 };
+
+  const splits = remaining.map(id => {
+    const zero = candidates.filter(model => model.predictions[id] === "0");
+    const one = candidates.filter(model => model.predictions[id] === "1");
+    return { id, zero, one, pairs: zero.length * one.length };
+  });
+  const bestScore = Math.max(...splits.map(split => split.pairs));
+  if (bestScore === 0) return { min: 0, max: 0, lex: 0 };
+
+  const totals = splits.filter(split => split.pairs === bestScore).map(({ id, zero, one }) => {
+    const other = remaining.filter(candidate => candidate !== id);
+    const left = greedyCounts(zero, other, budget - 1);
+    const right = greedyCounts(one, other, budget - 1);
+    return { min: left.min + right.min, max: left.max + right.max, lex: left.lex + right.lex };
+  });
+  return {
+    min: Math.min(...totals.map(result => result.min)),
+    max: Math.max(...totals.map(result => result.max)),
+    lex: totals[0].lex,
+  };
+}
+
+// Column pairs yield a 2×2 contingency table of joint responses.
+function twoStepRootValues(models, first) {
+  const best = [0, 0];
+  let fixed = 0;
+  for (const second of interventions) {
+    if (second === first) continue;
+    const counts = [[0, 0], [0, 0]];
+    for (const model of models) {
+      const firstBit = Number(model.predictions[first]);
+      const secondBit = Number(model.predictions[second]);
+      counts[firstBit][secondBit]++;
+    }
+    const [zero, one] = counts.map(branch => branch.filter(count => count === 1).length);
+    best[0] = Math.max(best[0], zero);
+    best[1] = Math.max(best[1], one);
+    fixed = Math.max(fixed, zero + one);
+  }
+  return { adaptive: best[0] + best[1], fixed };
+}
+
+test("exhaustive six-model census separates forced deficits from tie effects", t => {
+  const rows = Array.from({ length: 16 }, (_, value) => value.toString(2).padStart(4, "0"));
+  const gaps = {};
+  let forced = 0;
+  let tieSensitive = 0;
+  let alwaysOptimal = 0;
+  let terminalLoss = 0;
+  let rootLoss = 0;
+  let balancedRootLoss = 0;
+  let adaptiveGain = 0;
+  let runtimeOptimal = 0;
+  for (const table of combinations(rows, 6)) {
+    const models = makeModels(table);
+    const oracle = optimalCount(models, interventions, 2);
+    const { min, max, lex } = greedyCounts(models, interventions, 2);
+    let selected = 0;
+    let first;
+    let exactSelections = 0;
+    let exactUses = 0;
+    let advertisedPlan;
+    for (const target of models) {
+      const { result, queries } = replay(models, target);
+      first ??= queries[0];
+      assert.equal(queries[0], first);
+      const exact = replay(models, target, EXACT_TWO_STEP);
+      assert.ok(exact.queries.length <= 2);
+      advertisedPlan ??= exact.initial.intervention_plan;
+      exactUses += exact.queries.length;
+      if (exact.result.verdict === "CONDITIONAL_MODEL_SELECTION") {
+        assert.deepEqual(exact.result.survivors, [target.id]);
+        exactSelections++;
+      } else {
+        assert.equal(exact.result.verdict, "ABSTAIN");
+        assert.ok(exact.result.survivors.includes(target.id));
+      }
+      if (result.verdict === "CONDITIONAL_MODEL_SELECTION") {
+        assert.deepEqual(result.survivors, [target.id]);
+        selected++;
+      } else {
+        assert.equal(result.verdict, "ABSTAIN");
+        assert.ok(result.survivors.includes(target.id));
+      }
+    }
+    assert.equal(exactSelections, oracle, table.join(","));
+    assert.deepEqual(advertisedPlan, {
+      horizon: 2,
+      selected_models: exactSelections,
+      intervention_uses: exactUses,
+    });
+    runtimeOptimal++;
+    assert.equal(selected, lex, table.join(","));
+    assert.ok(min <= lex && lex <= max && max <= oracle, table.join(","));
+    const rootValues = interventions.map(id => twoStepRootValues(models, id));
+    assert.equal(Math.max(...rootValues.map(value => value.adaptive)), oracle, table.join(","));
+    const corrected = rootValues[interventions.indexOf(first)].adaptive;
+    assert.ok(selected <= corrected && corrected <= oracle, table.join(","));
+    if (corrected > selected) terminalLoss++;
+    if (oracle > corrected) {
+      rootLoss++;
+      if (models.filter(model => model.predictions[first] === "0").length === 3) balancedRootLoss++;
+    }
+    if (oracle > Math.max(...rootValues.map(value => value.fixed))) adaptiveGain++;
+    const deficit = oracle - selected;
+    gaps[deficit] = (gaps[deficit] ?? 0) + 1;
+    if (max < oracle) forced++;
+    else if (min < oracle) tieSensitive++;
+    else alwaysOptimal++;
+  }
+  const census = {
+    gaps, forced, tieSensitive, alwaysOptimal, terminalLoss, rootLoss, balancedRootLoss, adaptiveGain, runtimeOptimal,
+  };
+  t.diagnostic(JSON.stringify(census));
+  assert.equal(forced + tieSensitive + alwaysOptimal, 8008);
+  assert.deepEqual(census, {
+    gaps: { 0: 1832, 1: 6176 },
+    forced: 5904,
+    tieSensitive: 384,
+    alwaysOptimal: 1720,
+    terminalLoss: 640,
+    rootLoss: 5536,
+    balancedRootLoss: 5472,
+    adaptiveGain: 2688,
+    runtimeOptimal: 8008,
+  });
+});

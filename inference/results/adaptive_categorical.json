@@ -1,0 +1,34 @@
+{
+  "protocol": "neuron7x.conditional-inference.v1",
+  "case_id": "adaptive_categorical",
+  "basis": "synthetic",
+  "source_status": "PINNED_REFERENCE_ONLY",
+  "causal_authority": false,
+  "independent_replication": false,
+  "unresolved_assumptions": [
+    "candidate_class_completeness",
+    "intervention_fidelity",
+    "outcome_provenance",
+    "unmodelled_exogenous_mimickers"
+  ],
+  "intervention_policy": "exact-two-step",
+  "intervention_plan": {
+    "horizon": 2,
+    "selected_models": 5,
+    "intervention_uses": 10
+  },
+  "verdict": "ABSTAIN",
+  "reason": "INSUFFICIENT_DISCRIMINATION",
+  "survivors": [
+    "M0",
+    "M1",
+    "M2",
+    "M3",
+    "M4"
+  ],
+  "excluded": [],
+  "used_experiments": [
+    "observe"
+  ],
+  "next_intervention": "A"
+}

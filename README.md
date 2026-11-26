@@ -21,6 +21,8 @@ of each claim.
 
 ### Research
 
+[Research manifesto and 90-day protocol (Ukrainian)](./RESEARCH_MANIFESTO.uk.md)
+
 <p align="center">
   <a href="./RESEARCH_ATLAS.md">
     <picture>
@@ -64,6 +66,7 @@ reject the declared model class, or abstain. Selecting one surviving
 model does not grant causal authority.
 
 [Inference protocol](./INFERENCE_RUNTIME.md) ·
+[Exact two-step policy](./INFERENCE_RUNTIME.md#exact-intervention-selection) ·
 [Executable kernel](./inference/kernel.mjs) ·
 [Falsification traces](./inference/results/)
 
