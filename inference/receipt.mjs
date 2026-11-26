@@ -8,8 +8,18 @@ function canonical(value) {
   if (value === null || typeof value === "string" || typeof value === "boolean" || Number.isFinite(value)) {
     return JSON.stringify(value);
   }
-  if (Array.isArray(value)) return "[" + value.map(canonical).join(",") + "]";
-  if (typeof value !== "object") throw Error("INVALID_RECEIPT_VALUE");
+  if (Array.isArray(value)) {
+    if (Object.keys(value).length !== value.length) throw Error("INVALID_RECEIPT_VALUE");
+    const elements = [];
+    for (let index = 0; index < value.length; index++) {
+      if (!Object.hasOwn(value, index)) throw Error("INVALID_RECEIPT_VALUE");
+      elements.push(canonical(value[index]));
+    }
+    return "[" + elements.join(",") + "]";
+  }
+  if (typeof value !== "object" || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) {
+    throw Error("INVALID_RECEIPT_VALUE");
+  }
   return "{" + Object.keys(value).sort().map(key => JSON.stringify(key) + ":" + canonical(value[key])).join(",") + "}";
 }
 

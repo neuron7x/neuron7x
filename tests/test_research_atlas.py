@@ -107,3 +107,15 @@ class ResearchAtlasTest(unittest.TestCase):
                     else:
                         with self.assertRaises(ValueError):
                             atlas.load_manifest()
+
+    def test_route_label_cannot_add_a_second_link(self):
+        project = self.data["projects"][0]
+        project["probe_kind"] = "Check](https://outside.invalid)[More"
+        rendered = atlas.document(self.data)
+        row = next(line for line in rendered.splitlines() if line.startswith("| Falsify |"))
+        self.assertIn(r"Check\](https://outside.invalid)\[More", row)
+        self.assertIn(atlas.source_url(project, "falsify"), row)
+        project["probe_kind"] = "Check\nOther"
+        with patch.object(Path, "read_text", return_value=json.dumps(self.data)):
+            with self.assertRaisesRegex(ValueError, "Invalid probe label"):
+                atlas.load_manifest()

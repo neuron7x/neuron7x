@@ -43,6 +43,9 @@ test("a changed rival invalidates the receipt even if the exact verdict is uncha
   const forged = structuredClone(receipt);
   forged.evidence.witness_record = 0;
   assert.throws(() => verifyReceipt(input, atlas, forged), /RECEIPT_MISMATCH/);
+  const sparse = structuredClone(receipt);
+  sparse.forecast.branches = Array(1);
+  assert.throws(() => verifyReceipt(input, atlas, sparse), /INVALID_RECEIPT_VALUE/);
   const changedOutput = structuredClone(receipt);
   changedOutput.result.causal_authority = true;
   assert.throws(() => verifyReceipt(input, atlas, changedOutput), /RECEIPT_MISMATCH/);

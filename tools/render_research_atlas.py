@@ -52,8 +52,8 @@ def expected_blobs(data: dict) -> dict[tuple[str, str, str], str]:
     return expected
 
 
-def valid_label(value: object) -> bool:
-    return (isinstance(value, str) and 1 <= len(value) <= 24 and bool(value.strip(" "))
+def valid_label(value: object, limit: int = 24) -> bool:
+    return (isinstance(value, str) and 1 <= len(value) <= limit and bool(value.strip(" "))
             and re.search(r"[\x00-\x1f\ud800-\udfff\ufffe\uffff]", value) is None)
 
 
@@ -93,6 +93,8 @@ def load_manifest() -> dict:
             if any(part in {"", ".", ".."} for part in path.split("/")) or not SHA.fullmatch(reference["blob"]):
                 raise ValueError("Invalid source reference")
         visual_labels(project)
+        if not valid_label(project["probe_kind"], limit=96):
+            raise ValueError("Invalid probe label")
     expected_blobs(data)
     return data
 
@@ -149,6 +151,10 @@ def svg(data: dict, theme: str, mobile: bool, compact: bool = False) -> str:
     return "\n".join(parts) + "\n"
 
 
+def markdown_label(value: str) -> str:
+    return "".join("\\" + char if char in r"\[]<>|&`*!_" else char for char in value)
+
+
 def document(data: dict) -> str:
     parts = [
         '# Research Evidence Atlas',
@@ -159,7 +165,7 @@ def document(data: dict) -> str:
         '',
         data['verification_scope'],
         '',
-        '**Navigate:** ' + ' · '.join(f"[{p['name']}](#{p['slug']})" for p in data['projects']),
+        '**Navigate:** ' + ' · '.join(f"[{markdown_label(p['name'])}](#{p['slug']})" for p in data['projects']),
         '',
         '## Inspection protocol',
         '',
@@ -173,7 +179,7 @@ def document(data: dict) -> str:
         parts.extend([
             f"## {p['slug']}",
             '',
-            f"**[{p['name']}](https://github.com/{p['repository']})** · revision [{p['commit'][:12]}](https://github.com/{p['repository']}/commit/{p['commit']})",
+            f"**[{markdown_label(p['name'])}](https://github.com/{p['repository']})** · revision [{p['commit'][:12]}](https://github.com/{p['repository']}/commit/{p['commit']})",
             '',
             p['summary'],
             '',
@@ -182,7 +188,7 @@ def document(data: dict) -> str:
         ])
         labels = {'inspect': 'Mechanism', 'reproduce': 'Reproduction guide', 'falsify': p['probe_kind'], 'boundary': 'Claim boundary'}
         for role in ROLES:
-            parts.append(f"| {role.capitalize()} | [{labels[role]}]({source_url(p, role)}) | `{p['files'][role]['blob'][:12]}` |")
+            parts.append(f"| {role.capitalize()} | [{markdown_label(labels[role])}]({source_url(p, role)}) | `{p['files'][role]['blob'][:12]}` |")
         parts.extend(['', '**Scope:** ' + p['scope'], ''])
     parts.extend([
         '## Maintain the index',
