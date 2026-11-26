@@ -68,8 +68,9 @@ def visual_labels(project: dict) -> None:
             raise ValueError("Invalid project subtitle")
 
 
-def load_manifest() -> dict:
-    data = json.loads((ROOT / "research/atlas.json").read_text(encoding="utf-8"),
+def load_manifest(path: Path | None = None) -> dict:
+    path = path if path is not None else ROOT / "research/atlas.json"
+    data = json.loads(path.read_text(encoding="utf-8"),
                       object_pairs_hook=unique_json_object)
     if not isinstance(data, dict) or data.get("schema") != "neuron7x.research-atlas.v1":
         raise ValueError("Unsupported atlas schema")
@@ -329,13 +330,13 @@ def verified_tree_entries(entries: list, expected_sha: str) -> dict[str, dict]:
     return by_name
 
 
-def verify_tree_paths(expected: dict[tuple[str, str, str], str]) -> None:
+def verify_tree_paths(expected: dict[tuple[str, str, str], str], load=github_object) -> None:
     roots: dict[tuple[str, str], str] = {}
     trees: dict[tuple[str, str], dict[str, dict]] = {}
     for (repository, commit, path), blob in expected.items():
         revision = (repository, commit)
         if revision not in roots:
-            record = github_object(repository, f"git/commits/{commit}")
+            record = load(repository, f"git/commits/{commit}")
             root = record.get("tree")
             if record.get("sha") != commit or not isinstance(root, dict) or not valid_sha(root.get("sha")):
                 raise ValueError(f"Commit tree mismatch: {repository} / {commit}")
@@ -346,7 +347,7 @@ def verify_tree_paths(expected: dict[tuple[str, str, str], str]) -> None:
         for position, part in enumerate(parts):
             key = (repository, sha)
             if key not in trees:
-                record = github_object(repository, f"git/trees/{sha}")
+                record = load(repository, f"git/trees/{sha}")
                 entries = record.get("tree")
                 if record.get("sha") != sha or record.get("truncated") is not False or not isinstance(entries, list):
                     raise ValueError(f"Incomplete or mismatched Git tree: {repository} / {sha}")
@@ -363,11 +364,11 @@ def verify_tree_paths(expected: dict[tuple[str, str, str], str]) -> None:
                 sha = entry["sha"]
 
 
-def verify_remote(data: dict) -> None:
+def verify_remote(data: dict, load=github_object) -> None:
     expected = expected_blobs(data)
-    verify_tree_paths(expected)
+    verify_tree_paths(expected, load)
     for (repository, commit, path), blob in expected.items():
-        observed = github_object(repository, f"contents/{quote(path, safe='/')}?ref={commit}")
+        observed = load(repository, f"contents/{quote(path, safe='/')}?ref={commit}")
         label = f"{repository} / {path}"
         if (not isinstance(observed, dict) or observed.get("type") != "file"
                 or observed.get("path") != path or observed.get("encoding") != "base64"
