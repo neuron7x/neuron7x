@@ -8,6 +8,7 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
+from urllib.parse import quote
 from xml.etree import ElementTree
 
 from tools import render_research_atlas as atlas
@@ -16,6 +17,31 @@ from tools import render_research_atlas as atlas
 class ResearchAtlasTest(unittest.TestCase):
     def setUp(self):
         self.data = atlas.load_manifest()
+
+    def remote_objects(self, project, response, file_mode="100644"):
+        path = response["path"]
+        parts = path.split("/")
+        repository = project["repository"]
+        commit = project["commit"]
+        host = f"https://api.github.com/repos/{repository}/"
+        shas = [f"{index + 1:040x}" for index in range(len(parts))]
+        objects = {
+            host + f"git/commits/{commit}": {"sha": commit, "tree": {"sha": shas[0]}},
+            host + f"contents/{quote(path, safe='/')}?ref={commit}": response,
+        }
+        for index, part in enumerate(parts):
+            last = index == len(parts) - 1
+            objects[host + f"git/trees/{shas[index]}"] = {
+                "sha": shas[index], "truncated": False,
+                "tree": [{"path": part, "type": "blob" if last else "tree",
+                          "mode": file_mode if last else "040000",
+                          "sha": response["sha"] if last else shas[index + 1]}],
+            }
+        return objects
+
+    @staticmethod
+    def serve(objects):
+        return lambda request, timeout: io.BytesIO(json.dumps(objects[request.full_url]).encode())
 
     def test_manifest_rejects_decoded_duplicate_keys(self):
         raw = r'{"schema":"first","\u0073chema":"second"}'
@@ -33,11 +59,10 @@ class ResearchAtlasTest(unittest.TestCase):
                     "sha": reference["blob"], "size": len(payload),
                     "content": base64.b64encode(payload).decode("ascii")}
         self.data["projects"] = [project]
-        with patch.object(atlas, "urlopen", return_value=io.BytesIO(
-            json.dumps(response).encode()
-        )) as request, redirect_stdout(io.StringIO()):
+        objects = self.remote_objects(project, response)
+        with patch.object(atlas, "urlopen", side_effect=self.serve(objects)) as request, redirect_stdout(io.StringIO()):
             atlas.verify_remote(self.data)
-            request.assert_called_once()
+            self.assertEqual(request.call_count, len(objects))
 
         project["files"]["boundary"]["blob"] = "0" * 40
         with patch.object(Path, "read_text", return_value=json.dumps(self.data)):
@@ -89,8 +114,10 @@ class ResearchAtlasTest(unittest.TestCase):
             {"size": True}, {"size": 2}, {"content": "eQ=="}, {"content": "not base64"},
         ]:
             with self.subTest(change=change):
-                raw = json.dumps({**response, **change}).encode()
-                with patch.object(atlas, "urlopen", return_value=io.BytesIO(raw)):
+                objects = self.remote_objects(project, response)
+                url = next(url for url in objects if "/contents/" in url)
+                objects[url] = {**response, **change}
+                with patch.object(atlas, "urlopen", side_effect=self.serve(objects)):
                     with self.assertRaises(ValueError):
                         atlas.verify_remote(self.data)
 
@@ -119,3 +146,33 @@ class ResearchAtlasTest(unittest.TestCase):
         with patch.object(Path, "read_text", return_value=json.dumps(self.data)):
             with self.assertRaisesRegex(ValueError, "Invalid probe label"):
                 atlas.load_manifest()
+
+    def test_commit_tree_requires_regular_leaf_before_content_is_requested(self):
+        project = self.data["projects"][0]
+        blob = hashlib.sha1(b"blob 1\0x", usedforsecurity=False).hexdigest()
+        path = "docs/proof.md"
+        reference = {"path": path, "blob": blob}
+        project["files"] = {role: dict(reference) for role in atlas.ROLES}
+        self.data["projects"] = [project]
+        response = {"type": "file", "path": path, "encoding": "base64",
+                    "sha": blob, "size": 1, "content": "eA=="}
+        objects = self.remote_objects(project, response, "100755")
+        with patch.object(atlas, "urlopen", side_effect=self.serve(objects)), redirect_stdout(io.StringIO()):
+            atlas.verify_remote(self.data)
+        for label, mutate in [
+            ("symlink", lambda root, leaf: leaf["tree"][0].update(mode="120000")),
+            ("gitlink", lambda root, leaf: leaf["tree"][0].update(mode="160000", type="commit")),
+            ("truncated", lambda root, leaf: leaf.update(truncated=True)),
+            ("duplicate", lambda root, leaf: leaf["tree"].append(dict(leaf["tree"][0]))),
+            ("wrong blob", lambda root, leaf: leaf["tree"][0].update(sha="0" * 40)),
+            ("non-tree parent", lambda root, leaf: root["tree"][0].update(mode="120000")),
+            ("missing entry", lambda root, leaf: leaf.update(tree=[])),
+        ]:
+            with self.subTest(label=label):
+                changed = copy.deepcopy(objects)
+                root, leaf = [record for url, record in changed.items() if "/git/trees/" in url]
+                mutate(root, leaf)
+                with patch.object(atlas, "urlopen", side_effect=self.serve(changed)) as request:
+                    with self.assertRaises(ValueError):
+                        atlas.verify_remote(self.data)
+                    self.assertFalse(any("/contents/" in call.args[0].full_url for call in request.call_args_list))

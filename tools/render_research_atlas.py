@@ -276,13 +276,72 @@ body:
 '''
 
 
+def github_object(repository: str, route: str) -> dict:
+    request = Request(
+        f"https://api.github.com/repos/{repository}/{route}",
+        headers={"Accept": "application/vnd.github+json", "User-Agent": "neuron7x-research-atlas"},
+    )
+    limit = 8 * 1024 * 1024
+    with urlopen(request, timeout=20) as response:
+        raw = response.read(limit + 1)
+    if len(raw) > limit:
+        raise ValueError("GitHub object exceeds verification limit")
+    result = json.loads(raw, object_pairs_hook=unique_json_object)
+    if not isinstance(result, dict):
+        raise ValueError("Invalid GitHub object")
+    return result
+
+
+def valid_sha(value: object) -> bool:
+    return isinstance(value, str) and SHA.fullmatch(value) is not None
+
+
+def verify_tree_paths(expected: dict[tuple[str, str, str], str]) -> None:
+    roots: dict[tuple[str, str], str] = {}
+    trees: dict[tuple[str, str], dict[str, dict]] = {}
+    for (repository, commit, path), blob in expected.items():
+        revision = (repository, commit)
+        if revision not in roots:
+            record = github_object(repository, f"git/commits/{commit}")
+            root = record.get("tree")
+            if record.get("sha") != commit or not isinstance(root, dict) or not valid_sha(root.get("sha")):
+                raise ValueError(f"Commit tree mismatch: {repository} / {commit}")
+            roots[revision] = root["sha"]
+
+        sha = roots[revision]
+        parts = path.split("/")
+        for position, part in enumerate(parts):
+            key = (repository, sha)
+            if key not in trees:
+                record = github_object(repository, f"git/trees/{sha}")
+                entries = record.get("tree")
+                if record.get("sha") != sha or record.get("truncated") is not False or not isinstance(entries, list):
+                    raise ValueError(f"Incomplete or mismatched Git tree: {repository} / {sha}")
+                by_name = {}
+                for entry in entries:
+                    name = entry.get("path") if isinstance(entry, dict) else None
+                    if (not isinstance(name, str) or name in {"", ".", ".."} or "/" in name
+                            or name in by_name or not valid_sha(entry.get("sha"))):
+                        raise ValueError(f"Invalid Git tree entry: {repository} / {sha}")
+                    by_name[name] = entry
+                trees[key] = by_name
+
+            entry = trees[key].get(part, {})
+            last = position == len(parts) - 1
+            if last:
+                if entry.get("type") != "blob" or entry.get("mode") not in {"100644", "100755"} or entry.get("sha") != blob:
+                    raise ValueError(f"Source tree path mismatch: {repository} / {path}")
+            elif entry.get("type") != "tree" or entry.get("mode") != "040000":
+                raise ValueError(f"Source tree directory mismatch: {repository} / {path}")
+            else:
+                sha = entry["sha"]
+
+
 def verify_remote(data: dict) -> None:
     expected = expected_blobs(data)
+    verify_tree_paths(expected)
     for (repository, commit, path), blob in expected.items():
-        url = f"https://api.github.com/repos/{repository}/contents/{quote(path, safe='/')}?ref={commit}"
-        request = Request(url, headers={'Accept': 'application/vnd.github+json', 'User-Agent': 'neuron7x-research-atlas'})
-        with urlopen(request, timeout=20) as response:
-            observed = json.load(response, object_pairs_hook=unique_json_object)
+        observed = github_object(repository, f"contents/{quote(path, safe='/')}?ref={commit}")
         label = f"{repository} / {path}"
         if (not isinstance(observed, dict) or observed.get("type") != "file"
                 or observed.get("path") != path or observed.get("encoding") != "base64"
