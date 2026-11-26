@@ -158,6 +158,16 @@ test("receipt commands bind and verify real case files", t => {
   const transition = run("--verify-transition", prior, path, current, nextReceipt, anchor);
   assert.equal(transition.status, 0, transition.stderr);
   assert.equal(JSON.parse(transition.stdout).status, "TRANSITION_VERIFIED");
+  const successor = JSON.parse(advanced.stdout).receipt_sha256;
+  const args = ["--verify-anchored-transition", prior, path, current, nextReceipt, anchor];
+  const checked = run(...args, successor);
+  assert.equal(checked.status, 0, checked.stderr);
+  assert.equal(JSON.parse(checked.stdout).status, "ANCHORED_TRANSITION_VERIFIED");
+  assert.equal(run(...args).status, 2);
+  const incorrect = run(...args, "0".repeat(64));
+  assert.equal(incorrect.status, 1);
+  assert.equal(incorrect.stdout, "");
+  assert.match(incorrect.stderr, /RECEIPT_ANCHOR_MISMATCH/);
   const stale = run("--verify-receipt", current, path);
   assert.equal(stale.status, 1);
   assert.equal(stale.stdout, "");
@@ -289,4 +299,21 @@ test("forecast optimality checks lexical ties inside every branch", () => {
       { outcome: "0", next: "B" }, { outcome: "1", next: "C" },
     ] });
   }
+});
+
+test("dual anchors distinguish two individually valid successors of the same parent", () => {
+  const input = fixture("adaptive_categorical");
+  const parent = createReceipt(input, atlas);
+  const left = add(input, "A", "0");
+  const right = add(input, "A", "1");
+  const leftReceipt = advanceReceipt(input, left, atlas, parent);
+  const rightReceipt = advanceReceipt(input, right, atlas, parent);
+
+  assert.deepEqual(verifyTransition(input, right, atlas, parent, rightReceipt, parent.receipt_sha256), rightReceipt);
+  assert.deepEqual(verifyTransition(input, left, atlas, parent, leftReceipt,
+    parent.receipt_sha256, leftReceipt.receipt_sha256), leftReceipt);
+  assert.throws(() => verifyTransition(input, right, atlas, parent, rightReceipt,
+    parent.receipt_sha256, leftReceipt.receipt_sha256), /RECEIPT_ANCHOR_MISMATCH/);
+  assert.throws(() => verifyTransition(input, left, atlas, parent, leftReceipt,
+    parent.receipt_sha256, "malformed"), /INVALID_RECEIPT_ANCHOR/);
 });

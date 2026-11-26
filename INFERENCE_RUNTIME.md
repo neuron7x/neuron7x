@@ -45,7 +45,8 @@ node tools/run_inference.mjs --advance-receipt prior-case.json receipt.json next
 The first two commands use the same case. For the third, `prior-case.json` is the case underlying the receipt and `next-case.json` appends its recommended intervention and observed outcome. Use `--receipt-class` to start a class-based receipt.
 
 - `--verify-anchored-receipt <case.json> <receipt.json> <trusted-sha256>` checks the regenerated receipt against an independently retained digest. This catches replacement of both files.
-- `--verify-transition <prior-case.json> <prior-receipt.json> <new-case.json> <new-receipt.json> <trusted-prior-sha256>` authenticates the committed prefix against its anchor and verifies one successor. Several observed outcomes can produce valid successors. An independently retained successor digest distinguishes them.
+- `--verify-transition <prior-case.json> <prior-receipt.json> <new-case.json> <new-receipt.json> <trusted-prior-sha256>` authenticates the committed prefix against its anchor and verifies one successor. Several observed outcomes can produce valid successors.
+- `--verify-anchored-transition` takes the same arguments and the independently retained successor digest as a final argument. It checks both endpoints in one invocation.
 - The JavaScript receipt API snapshots pure JSON values before replay. Accessors, proxies, sparse arrays and non-JSON values are rejected.
 
 ## Input and replay

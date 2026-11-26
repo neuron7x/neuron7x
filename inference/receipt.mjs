@@ -194,14 +194,16 @@ export function createReceipt(input, atlas, policy = EXACT_TWO_STEP) {
   return receiptAt(data, snapshot(atlas), policy, data.observations.length);
 }
 
+function requireAnchor(receipt, expectedDigest) {
+  if (typeof expectedDigest !== "string" || !RECEIPT_HASH.test(expectedDigest)) throw Error("INVALID_RECEIPT_ANCHOR");
+  if (receipt.receipt_sha256 !== expectedDigest) throw Error("RECEIPT_ANCHOR_MISMATCH");
+}
+
 function replayReceipt(input, atlas, receipt, expectedDigest) {
   if (!receipt || receipt.schema !== SCHEMA) throw Error("INVALID_RECEIPT");
   const replay = receiptAt(input, atlas, receipt.policy, receipt.start_records);
   if (canonical(replay) !== canonical(receipt)) throw Error("RECEIPT_MISMATCH");
-  if (expectedDigest !== undefined) {
-    if (typeof expectedDigest !== "string" || !RECEIPT_HASH.test(expectedDigest)) throw Error("INVALID_RECEIPT_ANCHOR");
-    if (replay.receipt_sha256 !== expectedDigest) throw Error("RECEIPT_ANCHOR_MISMATCH");
-  }
+  if (expectedDigest !== undefined) requireAnchor(replay, expectedDigest);
   return replay;
 }
 
@@ -224,9 +226,10 @@ export function advanceReceipt(previous, current, atlas, receipt, expectedDigest
   return receiptAt(data, pins, trusted.policy, trusted.start_records);
 }
 
-export function verifyTransition(previous, current, atlas, priorReceipt, nextReceipt, priorDigest) {
+export function verifyTransition(previous, current, atlas, priorReceipt, nextReceipt, priorDigest, nextDigest) {
   if (priorDigest === undefined) throw Error("INVALID_RECEIPT_ANCHOR");
   const expected = advanceReceipt(previous, current, atlas, priorReceipt, priorDigest);
   if (canonical(expected) !== canonical(nextReceipt)) throw Error("RECEIPT_TRANSITION_MISMATCH");
+  if (nextDigest !== undefined) requireAnchor(expected, nextDigest);
   return expected;
 }

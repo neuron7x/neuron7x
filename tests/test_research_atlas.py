@@ -4,6 +4,8 @@ import hashlib
 import io
 import json
 import sys
+import subprocess
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -24,20 +26,25 @@ class ResearchAtlasTest(unittest.TestCase):
         repository = project["repository"]
         commit = project["commit"]
         host = f"https://api.github.com/repos/{repository}/"
-        shas = [f"{index + 1:040x}" for index in range(len(parts))]
-        objects = {
-            host + f"git/commits/{commit}": {"sha": commit, "tree": {"sha": shas[0]}},
-            host + f"contents/{quote(path, safe='/')}?ref={commit}": response,
+        contents_url = host + f"contents/{quote(path, safe='/')}?ref={commit}"
+        trees = []
+        oid = response["sha"]
+        for index in range(len(parts) - 1, -1, -1):
+            part = parts[index]
+            mode = file_mode if index == len(parts) - 1 else "040000"
+            kind = "tree" if mode == "040000" else "commit" if mode == "160000" else "blob"
+            raw = mode.lstrip("0").encode() + b" " + part.encode() + b"\0" + bytes.fromhex(oid)
+            actual = hashlib.sha1(f"tree {len(raw)}\0".encode() + raw, usedforsecurity=False).hexdigest()
+            trees.append((host + f"git/trees/{actual}", {
+                "sha": actual, "truncated": False,
+                "tree": [{"path": part, "type": kind, "mode": mode, "sha": oid}],
+            }))
+            oid = actual
+        return {
+            host + f"git/commits/{commit}": {"sha": commit, "tree": {"sha": oid}},
+            **dict(reversed(trees)),
+            contents_url: response,
         }
-        for index, part in enumerate(parts):
-            last = index == len(parts) - 1
-            objects[host + f"git/trees/{shas[index]}"] = {
-                "sha": shas[index], "truncated": False,
-                "tree": [{"path": part, "type": "blob" if last else "tree",
-                          "mode": file_mode if last else "040000",
-                          "sha": response["sha"] if last else shas[index + 1]}],
-            }
-        return objects
 
     @staticmethod
     def serve(objects):
@@ -159,9 +166,14 @@ class ResearchAtlasTest(unittest.TestCase):
         objects = self.remote_objects(project, response, "100755")
         with patch.object(atlas, "urlopen", side_effect=self.serve(objects)), redirect_stdout(io.StringIO()):
             atlas.verify_remote(self.data)
+        for label, mode in [("symlink", "120000"), ("gitlink", "160000")]:
+            with self.subTest(label=label):
+                changed = self.remote_objects(project, response, mode)
+                with patch.object(atlas, "urlopen", side_effect=self.serve(changed)) as request:
+                    with self.assertRaisesRegex(ValueError, "Source tree path mismatch"):
+                        atlas.verify_remote(self.data)
+                    self.assertFalse(any("/contents/" in call.args[0].full_url for call in request.call_args_list))
         for label, mutate in [
-            ("symlink", lambda root, leaf: leaf["tree"][0].update(mode="120000")),
-            ("gitlink", lambda root, leaf: leaf["tree"][0].update(mode="160000", type="commit")),
             ("truncated", lambda root, leaf: leaf.update(truncated=True)),
             ("duplicate", lambda root, leaf: leaf["tree"].append(dict(leaf["tree"][0]))),
             ("wrong blob", lambda root, leaf: leaf["tree"][0].update(sha="0" * 40)),
@@ -176,3 +188,22 @@ class ResearchAtlasTest(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         atlas.verify_remote(self.data)
                     self.assertFalse(any("/contents/" in call.args[0].full_url for call in request.call_args_list))
+
+    def test_tree_hash_matches_git_sorting_and_detects_unrelated_entry_changes(self):
+        entries = [
+            {"mode": "100755", "type": "blob", "sha": "a" * 40, "path": "foo0"},
+            {"mode": "040000", "type": "tree", "sha": "b" * 40, "path": "foo"},
+            {"mode": "100644", "type": "blob", "sha": "c" * 40, "path": "foo.bar"},
+        ]
+        records = b"".join(
+            f"{e['mode']} {e['type']} {e['sha']}\t{e['path']}\0".encode() for e in entries
+        )
+        with tempfile.TemporaryDirectory(prefix="github-tree-test-") as directory:
+            subprocess.run(["git", "init", "-q", "--object-format=sha1"], cwd=directory, check=True)
+            sha = subprocess.check_output(["git", "mktree", "-z", "--missing"], cwd=directory,
+                                          input=records).decode().strip()
+        self.assertEqual(set(atlas.verified_tree_entries(entries, sha)), {"foo", "foo0", "foo.bar"})
+        changed = copy.deepcopy(entries)
+        changed[0]["path"] = "other"
+        with self.assertRaisesRegex(ValueError, "Git tree bytes mismatch"):
+            atlas.verified_tree_entries(changed, sha)
