@@ -9,19 +9,19 @@ from epfl import UPSTREAM_COMMIT, load_sources, source_git
 PROTOCOL = "1d24e98aec1df58814544dcaadd2c672df853612"
 
 
-def digest(*parts):
-    return hashlib.sha256("|".join(map(str, ("A01", *parts))).encode("utf-8")).digest()
+def digest(*parts, namespace="A01"):
+    return hashlib.sha256("|".join(map(str, (namespace, *parts))).encode("utf-8")).digest()
 
 
-def generate_case(path, index, circuit):
+def generate_case(path, index, circuit, namespace="A01"):
     faults = sorted(
         ((node, bit) for node in circuit.nodes for bit in (0, 1)),
-        key=lambda fault: (digest(path, index, "fault", *fault), fault),
+        key=lambda fault: (digest(path, index, "fault", *fault, namespace=namespace), fault),
     )[:7]
     if len(faults) != 7:
         raise ValueError(f"insufficient fault sites in {path}")
     probes = [
-        tuple(digest(path, index, "input", probe, signal)[0] & 1 for signal in circuit.inputs)
+        tuple(digest(path, index, "input", probe, signal, namespace=namespace)[0] & 1 for signal in circuit.inputs)
         for probe in range(7)
     ]
     matrix = tuple(zip(*(circuit.simulate(bits, faults) for bits in probes), strict=True))

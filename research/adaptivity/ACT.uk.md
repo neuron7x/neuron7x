@@ -44,3 +44,5 @@ python3 research/adaptivity/audit.py /path/to/new-a01-result/inputs.json /path/t
 ```sh
 python3 -m unittest discover -s tests -p test_adaptivity_archive.py
 ```
+
+Свіжу панель ISCAS’85 оцінено у внутрішньому повторі A02. Рішення про практичну перевагу там залишилося невизначеним. [Акт A02 і команда зовнішнього відтворення](./replication/ACT.uk.md)
